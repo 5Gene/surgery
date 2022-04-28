@@ -31,7 +31,7 @@ interface ClassSurgery {
     fun surgeryOver()
 }
 
-abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
+abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     private val lastProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
     private val localLastFile = ThreadLocal<LastFile<DOCTOR>>()
     private val chiefDoctors = ThreadLocal<List<DOCTOR>>()
@@ -219,10 +219,10 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     }
 }
 
-class ClassTreeSurgery : ClassSurgeryImpl<ClassTreeDoctor>() {
+class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
-        //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
+        //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         return ServiceLoader.load(ClassTreeDoctor::class.java).iterator().asSequence().map {
             " # ${this.javaClass.simpleName} === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
             it.className to it
@@ -233,20 +233,20 @@ class ClassTreeSurgery : ClassSurgeryImpl<ClassTreeDoctor>() {
         if (doctors.isNullOrEmpty()) {
             return classFileByte
         }
-        //        ClassWriter.COMPUTE_MAXS
+//        ClassWriter.COMPUTE_MAXS
 //        这种方式会自动计算上述 操作数栈和局部变量表的大小 但需要手动触发
 //        通过调用org.objectweb.asm.commons.LocalVariablesSorter#visitMaxs
 //        触发 参数可以随便写
 //        ClassWriter.COMPUTE_FRAMES
 //        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
-        return ClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
+        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
             doctors.fold(ClassNode().also { originNode ->
-                ClassReader(classFileByte).accept(originNode, ClassReader.EXPAND_FRAMES)
-            }) { classNode, worker ->
+                ClassReader(classFileByte).accept(originNode, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
+            }) { classNode, doctor ->
                 try {
-                    worker.surgery(classNode)
+                    doctor.surgery(classNode)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    println("${classNode.name} > ${e.message}")
                     classNode
                 }
             }.accept(writer)
@@ -254,9 +254,9 @@ class ClassTreeSurgery : ClassSurgeryImpl<ClassTreeDoctor>() {
     }
 }
 
-class ClassVisitorSurgery : ClassSurgeryImpl<ClassVisitorDoctor>() {
+class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
-        //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
+        //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         return ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().asSequence().map {
             " # ${this.javaClass.simpleName} === ClassVisitorSurgery ==== ${it.javaClass.name}".sout()
             it.className to it
@@ -275,16 +275,16 @@ class ClassVisitorSurgery : ClassSurgeryImpl<ClassVisitorDoctor>() {
 //        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
         //https://www.jianshu.com/p/abd1b1b8d3f3
         //https://www.kingkk.com/2020/08/ASM%E5%8E%86%E9%99%A9%E8%AE%B0/
-        return ClassWriter(ClassWriter.COMPUTE_FRAMES ).also {
+        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also {
             ClassReader(classFileByte).accept(doctors.fold(it as ClassVisitor) { acc, doctor ->
                 try {
                     doctor.surgery(acc)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    e.message?.sout()
                     acc
                 }
                 //EXPAND_FRAMES 说明在读取 class 的时候同时展开栈映射帧(StackMap Frame)
-            }, ClassReader.EXPAND_FRAMES)
+            }, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
         }.toByteArray()
     }
 }

@@ -1,6 +1,8 @@
 package sparkj.surgery.more
 
 import org.apache.commons.io.FileUtils
+import org.jetbrains.kotlin.com.google.gson.Gson
+import org.jetbrains.kotlin.com.google.gson.JsonObject
 import sparkj.surgery.Dean
 import java.io.File
 import java.io.InputStream
@@ -21,25 +23,59 @@ enum class FilterAction {
     noTransform, transformLast, transformNow, transformNowLast
 }
 
-data class LastFile<WORKER>(
+data class LastFile<DOCTOR>(
     val dest: File,
-    val doctors: MutableMap<String, List<WORKER>>,
+    val doctors: MutableMap<String, MutableSet<DOCTOR>>,
     val jar: Boolean = false
 )
 
 fun String.log() {
-    Dean.dean.project?.logger?.info("✨ $this ")
+    Dean.context.project?.logger?.info("✨ $this ")
 }
 
-fun String.isModuleJar():Boolean {
-    return this=="classes.jar"
+fun String.isModuleJar(): Boolean {
+    return this == "classes.jar"
+}
+
+fun File.filterJar():Boolean{
+    return name.startsWith("jetified-")
+            ||name.startsWith("core-")
+            ||name.startsWith("drawerlayout-")
+            ||name.startsWith("vectordrawable-")
+            ||name.startsWith("dynamicanimation-")
+            ||name.startsWith("localbroadcastmanager-")
+            ||name.startsWith("navigation-")
+            ||name.startsWith("viewpager-")
+            ||name.startsWith("coordinatorlayout-")
+            ||name.startsWith("legacy-")
+            ||name.startsWith("loader-")
+            ||name.startsWith("customview-")
+            ||name.startsWith("recyclerview-")
+            ||name.startsWith("recyclerview-")
+            ||name.startsWith("swiperefreshlayout-")
+            ||name.startsWith("transition-")
+            ||name.startsWith("cardview-")
+            ||name.startsWith("slidingpanelayout-")
+            ||name.startsWith("versionedparcelable-")
+            ||name.startsWith("constraintlayout-")
+            ||name.startsWith("material-")
+            ||name.startsWith("appcompat-")
+            ||name.startsWith("annotation-")
+            ||name.startsWith("lifecycle-")
+            ||name.startsWith("print-")
+            ||name.startsWith("collection-")
+            ||name.startsWith("cursoradapter-")
+            ||name.startsWith("media-")
+            ||name.startsWith("asynclayoutinflater-")
+            ||name.startsWith("fragment-")
+            ||name.startsWith("interpolator-")
 }
 
 /**
  * review的时候过滤
  */
 fun String.skipByFileName(): Boolean {
-    return !isClass()||isBindingClass()||isBuildConfigClass()||isRClass()
+    return !isClass() || isBindingClass() || isBuildConfigClass() || isRClass()
 }
 
 fun String.className(): String {
@@ -58,17 +94,16 @@ fun String.isBindingClass(): Boolean {
     return this.endsWith("Binding.class")
 }
 
-fun String.isArouterClass(): Boolean {
-    return this.startsWith("ARouter$$")
-}
-
-
 fun String.isRClass(): Boolean {
-    return this.startsWith("R") || this.contains("R$")
+    return startsWith("R$")||startsWith("R.")
 }
 
 fun String.toPackageName(): String {
     return substring(0, this.indexOf(".class")).replace("/|\\\\", ".")
+}
+
+fun String.isJar(): Boolean {
+    return endsWith(".jar")
 }
 
 fun Any.sout() {
@@ -88,7 +123,7 @@ fun File.packageName(srcDirectory: File): String {
     return replace.substring(1).toPackageName()
 }
 
-fun File.isModuleJar():Boolean {
+fun File.isModuleJar(): Boolean {
     return name.isModuleJar()
 }
 
@@ -97,7 +132,7 @@ fun File.isModuleJar():Boolean {
  * 在遍历的时候过滤class后续不处理
  */
 fun File.skipFile(): Boolean {
-    return !this.name.isClass()
+    return name.skipByFileName()
 }
 
 fun File.className(parent: File?): String {
@@ -105,7 +140,7 @@ fun File.className(parent: File?): String {
 }
 
 fun File.isJar(): Boolean {
-    return name.endsWith(".jar")
+    return name.isJar()
 }
 
 fun File.touch(): File {
@@ -115,7 +150,7 @@ fun File.touch(): File {
 
 inline fun File.repair(repair: (ByteArray) -> ByteArray) {
     val destFile = File("$absolutePath.temp")
-    review(destFile,repair)
+    review(destFile, repair)
     delete()
     FileUtils.moveFile(destFile, this)
 }
@@ -125,7 +160,7 @@ inline fun File.review(destFile: File, wizard: (ByteArray) -> ByteArray) {
     destFile.touch().outputStream().use { outputStream ->
         this.inputStream().use {
             if (this.name.skipByFileName()) {
-                " File.review > skip class ${this.name}".sout()
+                " File.review > skip class ${this.name}".log()
                 outputStream.write(it.readBytes())
             } else {
                 outputStream.write(it.review(wizard))
@@ -137,7 +172,7 @@ inline fun File.review(destFile: File, wizard: (ByteArray) -> ByteArray) {
 inline fun File.repairJar(repair: (srcJarEntry: JarEntry, bytes: ByteArray) -> ByteArray) {
     //jarfile需要close
     val destFile = File("$absolutePath.temp")
-    JarFile(this).review(destFile,repair)
+    JarFile(this).review(destFile, repair)
     delete()
     FileUtils.moveFile(destFile, this)
 }
@@ -159,7 +194,7 @@ inline fun JarFile.review(destFile: File, jarWizard: (srcJarEntry: JarEntry, byt
                 //读取jarEntry中的流 进行处理
                 jarFile.getInputStream(jarEntry).use { inputStream ->
                     if (jarEntry.name.skipByFileName()) {
-                        " JarFile.review > skip class ${jarEntry.name}".sout()
+                        " JarFile.review > skip class ${jarEntry.name}".log()
                         jarOutputStream.write(inputStream.readBytes())
                     } else {
                         "jarEntry.reivew > $jarEntry ".log()
@@ -191,3 +226,7 @@ inline fun JarFile.scan(jarWizard: (srcJarEntry: JarEntry) -> Unit) {
 inline fun InputStream.review(wizard: (ByteArray) -> ByteArray = { it -> it }): ByteArray {
     return wizard(readBytes())
 }
+
+inline fun <reified T> Any?.safeAs(): T? = this as? T
+
+

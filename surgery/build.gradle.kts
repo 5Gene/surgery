@@ -3,10 +3,9 @@ import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
 val kotlin_version = "1.6.20"
 
 plugins {
-    this.`kotlin-dsl`
     id("java-gradle-plugin")
     id("maven-publish")
-//    id("kotlin-kapt")
+    id("kotlin-kapt")
 //    kotlin("jvm") version "1.6.20"
 }
 apply(plugin = "kotlin-kapt")
@@ -23,7 +22,7 @@ repositories {
 //思路和booster一样 一个plugin一次文件复制，执行所有transform
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
-//    kapt("com.google.auto.service:auto-service:1.0")
+    kapt("com.google.auto.service:auto-service:1.0")
     implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:2.3.0")
 //    implementation(localGroovy())
     implementation(gradleApi())

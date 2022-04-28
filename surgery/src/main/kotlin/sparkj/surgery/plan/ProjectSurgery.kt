@@ -38,19 +38,6 @@ interface ProjectSurgery {
 class ProjectSurgeryImpl : ProjectSurgery {
     val classSurgeries = mutableListOf<ClassSurgery>()
     private val scheduler = OperatingRoom()
-    private val sp by lazy {
-        JSP("${this.javaClass.simpleName}_last")
-    }
-    private val lastProcessedFiles by lazy {
-        mutableListOf<String>().also {
-            val cache = sp.read()
-            " # ${this.javaClass.simpleName} last file cache: $cache".sout()
-            if (!cache.isNullOrBlank()) {
-                it.addAll(cache.substring(1, cache.length - 1).split(",").toList())
-            }
-            " # ${this.javaClass.simpleName} last file cache: $it".sout()
-        }
-    }
 
     init {
         //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
@@ -69,10 +56,16 @@ class ProjectSurgeryImpl : ProjectSurgery {
 
     override fun surgeryOnFile(srcFile: File, srcDirectory: File, destDirectory: File, status: Status) {
         scheduler.submit {
+            if (status == Status.NOTCHANGED) {
+                " # ${this.javaClass.simpleName} ==== surgeryOnFile > NOTCHANGED class: ${srcFile.name}".sout()
+                // 文件没变化
+                // 如果是最后处理的文件 需要当做有变化处理，因为最后处理的文件都是遍历过其他文件之后对最后处理的文件进行修改
+                return@submit
+            }
             val destFilePath = srcFile.absolutePath.replace(srcDirectory.absolutePath, destDirectory.absolutePath)
             val destFile = File(destFilePath)
             if (srcFile.name.skipByFileName()) {
-                " # ${this.javaClass.simpleName} ==== surgeryOnFile > skip class ${srcFile.name}".sout()
+                " # ${this.javaClass.simpleName} ==== surgeryOnFile > skip class: ${srcFile.name}".sout()
                 FileUtils.touch(destFile)
                 FileUtils.copyFile(srcFile, destFile)
                 return@submit
@@ -82,12 +75,6 @@ class ProjectSurgeryImpl : ProjectSurgery {
                 it.filterByClassName(srcFile, destFile, false, srcFile.name, status) {
                     srcFile.className(srcDirectory)
                 }
-            }
-            if (status == Status.NOTCHANGED && !lastProcessedFiles.contains(srcFile.path)) {
-                " # ${this.javaClass.simpleName} ==== surgeryOnFile > NOTCHANGED class ${srcFile.name}".sout()
-                // 文件没变化
-                // 如果是最后处理的文件 需要当做有变化处理，因为最后处理的文件都是遍历过其他文件之后对最后处理的文件进行修改
-                return@submit
             }
             val nowLastGroup = grouped[FilterAction.transformNowLast] ?: emptyList<ClassSurgery>()
             val nowGroup = grouped[FilterAction.transformNow] ?: emptyList<ClassSurgery>() + nowLastGroup
@@ -99,11 +86,6 @@ class ProjectSurgeryImpl : ProjectSurgery {
                     }
                 }
             } else {
-                if (!grouped[FilterAction.transformLast].isNullOrEmpty()) {
-                    if (!lastProcessedFiles.contains(srcFile.path)) {
-                        lastProcessedFiles.add(srcFile.path)
-                    }
-                }
                 //如果现在要处理的为空 未来处理的不为空那么未来会处理 但是先要复制源文件到dest
                 FileUtils.touch(destFile)
                 FileUtils.copyFile(srcFile, destFile)
@@ -117,8 +99,13 @@ class ProjectSurgeryImpl : ProjectSurgery {
         // 可能有部分classMore要处理部分不处理部分以后处理  而且只有在遍历的时候才知道
         // 所以当classMore内部有要现在处理和以后处理的情况的时候 就遍历让现在处理的去处理
         scheduler.submit {
+            if (status == Status.NOTCHANGED) {
+                " # ${this.javaClass.simpleName} ==== surgeryOnJar > NOTCHANGED jar: ${srcJarFile.name}".sout()
+                return@submit
+            }
+
             if (srcJarFile.skipJar()) {
-                " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar ${srcJarFile.name} ==== ".sout()
+                " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar: ${srcJarFile.name} ==== ".sout()
                 FileUtils.touch(destJarFile)
                 FileUtils.copyFile(srcJarFile, destJarFile)
                 return@submit
@@ -129,45 +116,22 @@ class ProjectSurgeryImpl : ProjectSurgery {
             val nowLastGroup = grouped[FilterAction.transformNowLast] ?: emptyList<ClassSurgery>()
             val nowGroup = grouped[FilterAction.transformNow] ?: emptyList<ClassSurgery>() + nowLastGroup
             val lastGroup = grouped[FilterAction.transformLast] ?: emptyList<ClassSurgery>()
-            if (status == Status.NOTCHANGED && !lastProcessedFiles.contains(srcJarFile.path)) {
-                if (nowGroup.isEmpty()) {
-                    return@submit
-                }
-                //查看 最后处理的文件有没有它 有的话需要transform
-                if (!nowGroup.isNullOrEmpty() || !lastGroup.isNullOrEmpty()) {
-                    JarFile(srcJarFile).scan { jarEntry ->
-                        (nowGroup + lastGroup).groupBy { doctor ->
-                            doctor.filterByClassName(srcJarFile, destJarFile, true, jarEntry.name, status) {
-                                jarEntry.name.className()
-                            }
-                        }
-                    }
-                }
-                return@submit
-            }
 
             if (nowGroup.isNullOrEmpty() && lastGroup.isNullOrEmpty()) {
                 //都不处理就直接复制jar
                 FileUtils.touch(destJarFile)
                 FileUtils.copyFile(srcJarFile, destJarFile)
             } else {
-                var lastOperated = false
                 JarFile(srcJarFile).review(destJarFile) { jarEntry, bytes ->
                     classSurgeries.filter { more ->
                         val action = more.filterByClassName(srcJarFile, destJarFile, true, jarEntry.name, status) {
                             jarEntry.name.className()
-                        }
-                        if (action == FilterAction.transformLast) {
-                            lastOperated = true
                         }
                         //以后处理的限制也得复制到dest因为以后处理的时候是直接处理dest
                         action >= FilterAction.transformNow
                     }.fold(bytes) { acc, more ->
                         more.surgery(acc)
                     }
-                }
-                if (lastOperated && !lastProcessedFiles.contains(srcJarFile.path)) {
-                    lastProcessedFiles.add(srcJarFile.path)
                 }
             }
         }
@@ -177,12 +141,6 @@ class ProjectSurgeryImpl : ProjectSurgery {
         scheduler.await()
         classSurgeries.forEach {
             it.surgeryOver()
-        }
-        if (lastProcessedFiles.isNotEmpty()) {
-            try {
-                sp.save(lastProcessedFiles.toString())
-            } catch (e: Exception) {
-            }
         }
         " # ${this.javaClass.simpleName} ==== surgeryOver ==== ".sout()
     }

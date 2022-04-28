@@ -19,10 +19,10 @@ import java.util.concurrent.TimeUnit
 class Surgery constructor(val project: Project) : Transform() {
 
     init {
-        Dean.dean.project = project
+        Dean.context.project = project
     }
 
-    private val operation = ProjectSurgeryImpl()
+    private val surgery = ProjectSurgeryImpl()
     //    用户自定义的Transform，会比系统的Transform先执行
     override fun getName() = "Surgery"
 
@@ -36,7 +36,7 @@ class Surgery constructor(val project: Project) : Transform() {
 //    SUB_PROJECTS_LOCAL_DEPS：只有子项目的本地依赖项(本地jar)
 //    TESTED_CODE：由当前变量(包括依赖项)测试的代码
     override fun getScopes(): MutableSet<QualifiedContent.ScopeType> = when {
-        operation.classSurgeries.isEmpty() -> mutableSetOf()
+        surgery.classSurgeries.isEmpty() -> mutableSetOf()
         project.plugins.hasPlugin("com.android.library") -> TransformManager.PROJECT_ONLY
         project.plugins.hasPlugin("com.android.application") -> TransformManager.SCOPE_FULL_PROJECT
         project.plugins.hasPlugin("com.android.dynamic-feature") -> TransformManager.SCOPE_FULL_WITH_FEATURES
@@ -47,12 +47,12 @@ class Surgery constructor(val project: Project) : Transform() {
 
     override fun transform(transformInvocation: TransformInvocation) {
         super.transform(transformInvocation)
-        Dean.dean.transformInvocation = transformInvocation
+        Dean.context.transformInvocation = transformInvocation
         (" # ${this.javaClass.simpleName} >>>>>> incremental:${transformInvocation.isIncremental} " +
                 " variantName: ${transformInvocation.context.variantName} <<<<<<<< ").sout()
-
+        ClassLoaderHelper.setClassLoader(transformInvocation.inputs,project)
         val nanoStartTime = System.nanoTime()
-        operation.surgeryPrepare()
+        surgery.surgeryPrepare()
         if (!transformInvocation.isIncremental) {
             //不是增量编译，则清空output目录
             transformInvocation.outputProvider.deleteAll()
@@ -68,10 +68,10 @@ class Surgery constructor(val project: Project) : Transform() {
             "================ transformInvocation.inputs.onEach =================== end ".sout()
         }
 
-        operation.surgeryOver()
+        surgery.surgeryOver()
         val cost = System.nanoTime() - nanoStartTime
         " # ${this.javaClass.simpleName} == cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}".sout()
-        Dean.dean.release()
+        Dean.context.release()
     }
 
     private fun reviewJarFile(
@@ -87,15 +87,14 @@ class Surgery constructor(val project: Project) : Transform() {
                 Format.JAR
             )
 
-            " # ${this.javaClass.simpleName} ***** surgeryOnJar ${jar.file.name}".sout()
             if (transformInvocation.isIncremental) {
-                " # ${this.javaClass.simpleName} ==  jarInputs ${jar.status} : ${jar.file.name}".sout()
+                " # ${this.javaClass.simpleName} ***** surgeryOnJar incremental: ${jar.status} : ${jar.file.name}".sout()
                 when (jar.status!!) {
                     Status.NOTCHANGED -> {
-                        operation.surgeryOnJar(jar.file, destJarFile, Status.NOTCHANGED)
+                        surgery.surgeryOnJar(jar.file, destJarFile, Status.NOTCHANGED)
                     }
                     Status.ADDED, Status.CHANGED -> {
-                        operation.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
+                        surgery.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
                     }
                     Status.REMOVED -> {
                         if (destJarFile.exists()) {
@@ -104,7 +103,8 @@ class Surgery constructor(val project: Project) : Transform() {
                     }
                 }
             } else {
-                operation.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
+                " # ${this.javaClass.simpleName} ***** surgeryOnJar: ${jar.file.name}".sout()
+                surgery.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
             }
         }
     }
@@ -122,18 +122,19 @@ class Surgery constructor(val project: Project) : Transform() {
                 Format.DIRECTORY
             )
             val srcDirectory = dir.file
-            " # ${this.javaClass.simpleName} ***** surgeryOnDirectory ${srcDirectory.name}".sout()
             if (transformInvocation.isIncremental) {
+                " # ${this.javaClass.simpleName} ***** surgeryOnDirectory incremental: ${srcDirectory.name}".sout()
                 //https://juejin.cn/post/6916304559602139149
                 //https://github.com/Leifzhang/AndroidAutoTrack
                 dir.changedFiles.onEach { entry ->
-                    " ==  directoryInputs ${entry.value} : ${entry.key.name}".sout()
+                    " # ${this.javaClass.simpleName} ***** surgeryOnDirectory file: ${entry.value} : ${entry.key.name}".sout()
                     when (entry.value!!) {
                         Status.NOTCHANGED -> {
-                            operation.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.NOTCHANGED)
+                            //主module下的未改变文件不会被遍历到这，子module的代码会被打包成 class.jar 不会走这里
+                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.NOTCHANGED)
                         }
                         Status.ADDED, Status.CHANGED -> {
-                            operation.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.ADDED)
+                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.ADDED)
                         }
                         Status.REMOVED -> {
                             val path = entry.key.absolutePath.replace(srcDirectory.absolutePath, destDirectory.absolutePath)
@@ -145,8 +146,9 @@ class Surgery constructor(val project: Project) : Transform() {
                     }
                 }
             } else {
+                " # ${this.javaClass.simpleName} ***** surgeryOnDirectory: ${srcDirectory.name}".sout()
                 srcDirectory.walk().filter { it.isFile }.forEach {
-                    operation.surgeryOnFile(it, srcDirectory, destDirectory, Status.ADDED)
+                    surgery.surgeryOnFile(it, srcDirectory, destDirectory, Status.ADDED)
                 }
             }
         }

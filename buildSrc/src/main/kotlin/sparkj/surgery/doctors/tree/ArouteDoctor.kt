@@ -1,4 +1,4 @@
-package sparkj.surgery.doctors
+package sparkj.surgery.doctors.tree
 
 import sparkj.surgery.more.FilterAction
 import sparkj.surgery.more.*
@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import groovyjarjarasm.asm.Opcodes
 import org.objectweb.asm.tree.*
+import sparkj.surgery.JTAG
 import sparkj.surgery.more.isJar
 
 /**
@@ -85,7 +86,7 @@ class ArouteDoctor : ClassTreeDoctor() {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
             insn.findAll(Opcodes.RETURN,Opcodes.ATHROW).forEach { ret ->
-                insn.insertLogCodeBefore(ret,"Surgery","$logisitscCenter --> visitInsn")
+                insn.insertLogCodeBefore(ret, JTAG,"$logisitscCenter --> visitInsn")
 //                insn.insertBefore(ret, LdcInsnNode("Surgery"))
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))

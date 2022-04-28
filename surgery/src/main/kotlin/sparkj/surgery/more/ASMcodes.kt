@@ -4,7 +4,7 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import sparkj.surgery.JAPI
-import sparkj.surgery.doctors.logisitscCenter
+import java.lang.reflect.Modifier
 
 
 /**
@@ -74,3 +74,20 @@ fun isLambdaWithParamClick(methodName: String, descriptor: String, className: St
 //    [onClick], descriptor = [(Landroid/view/View;)V], signature = [null], exceptions = [null]
 fun isNormalClick(methodName: String, descriptor: String) = "onClick" == methodName &&
         descriptor == "(Landroid/view/View;)V"
+
+
+fun MethodNode.isMethodIgnore(): Boolean {
+    return Modifier.isAbstract(access)
+}
+
+fun Int.isReturn(): Boolean {
+    return (this <= Opcodes.RETURN && this >= Opcodes.IRETURN)
+}
+
+fun Int.isMethodInvoke(): Boolean {
+    return (this <= Opcodes.INVOKEDYNAMIC && this >= Opcodes.INVOKEVIRTUAL)
+}
+
+fun Int.isMethodIgnore(): Boolean {
+    return Modifier.isAbstract(this) || Modifier.isNative(this)
+}

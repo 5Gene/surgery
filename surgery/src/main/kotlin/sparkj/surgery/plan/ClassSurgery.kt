@@ -1,11 +1,14 @@
 package sparkj.surgery.plan
 
 import com.android.build.api.transform.Status
+import org.jetbrains.kotlin.com.google.gson.Gson
+import org.jetbrains.kotlin.com.google.gson.JsonParser
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import sparkj.surgery.Dean
+import sparkj.surgery.JSP
 import sparkj.surgery.more.*
 import sparkj.surgery.or.OperatingRoom
 import java.io.File
@@ -20,7 +23,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  * <p><a href="https://github.com/ZuYun">github</a>
  */
 
-
 interface ClassSurgery {
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
@@ -29,17 +31,56 @@ interface ClassSurgery {
     fun surgeryOver()
 }
 
-abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
+abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     private val lastProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
-    val doctors = mutableListOf<DOCTOR>()
     private val localLastFile = ThreadLocal<LastFile<DOCTOR>>()
     private val chiefDoctors = ThreadLocal<List<DOCTOR>>()
+    private val currentFile = ThreadLocal<File>()
     private val or = OperatingRoom()
+    private val gson = Gson()
+    private val sp by lazy {
+        JSP("${this.javaClass.simpleName}_class_surgery")
+    }
+
+    private val doctors by lazy {
+        val doctorsMap = loadDoctors()
+        if (Dean.context.transformInvocation?.isIncremental != true) {
+            doctorsMap.values
+        } else {
+            restoreCache(doctorsMap)
+        }
+    }
+
+    private fun restoreCache(doctorsMap: MutableMap<String, DOCTOR>): MutableCollection<DOCTOR> {
+        val cache = sp.read()
+        if (cache.isNotEmpty()) {
+            val array = JsonParser.parseString(cache).asJsonArray
+            lastProcessedFiles.addAll(array.map {
+                val jsonobj = it.asJsonObject
+                val path = jsonobj.get("dest").asJsonObject.get("path").asString
+                val doctorsObj = jsonobj.get("doctors").asJsonObject
+                val map = doctorsObj.keySet().associateWith { file ->
+                    doctorsObj.get(file).asJsonArray.asSequence().map { doc ->
+                        val className = doc.asJsonObject.get("className").asString
+                        val classIns = Class.forName(className)
+                        doctorsMap[className] = gson.fromJson(gson.toJson(doc), classIns) as DOCTOR
+                        doctorsMap[className]!!
+                    }.toMutableSet()
+                }.toMutableMap()
+                LastFile(File(path), map, jar = path.isJar())
+            }.toList())
+            " # ${this.javaClass.simpleName} >>> =============== cache ================== <<< ".sout()
+            " # ${this.javaClass.simpleName} >>> ${gson.toJson(lastProcessedFiles)} <<< ".sout()
+            " # ${this.javaClass.simpleName} >>> =============== cache ================== <<< ".sout()
+        }
+        return doctorsMap.values
+    }
+
+    abstract fun loadDoctors(): MutableMap<String, DOCTOR>
 
     override fun surgeryPrepare() {
         localLastFile.set(null)
         chiefDoctors.set(null)
-        lastProcessedFiles.clear()
         doctors.forEach {
             it.surgeryPrepare()
         }
@@ -62,9 +103,6 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
      */
     override fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, status: Status, className: () -> String): FilterAction {
         var result = FilterAction.noTransform
-//        if (status != Status.ADDED) {
-//            return result
-//        }
         if (isJar) {
             val grouped = doctors.groupBy {
                 it.filterByClassName(src, className)
@@ -75,8 +113,9 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
                 return FilterAction.noTransform
             }
             if (!lastGroup.isNullOrEmpty()) {
+                println(lastGroup)
+                println(lastGroup.size.toString())
                 collectLastWorker(dest, fileName, lastGroup)
-                " # ${this.javaClass.simpleName} >>> fond jar file to last : ${src.name} >> doctors : $lastGroup".sout()
                 result = FilterAction.transformLast
             }
             if (nowGroup.isNullOrEmpty()) {
@@ -96,8 +135,8 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
             if (!lastGroup.isNullOrEmpty()) {
                 //只要有未来要处理的就不执行 以后在执行  以后执行的时候要把现在执行的也执行
                 val lastWorkers = if (nowGroup.isNullOrEmpty()) lastGroup else nowGroup + lastGroup
-                lastProcessedFiles.add(LastFile(dest, mutableMapOf(fileName to lastWorkers), jar = false))
-                " # ${this.javaClass.simpleName} >>> fond class file to last : ${src.name} >> doctors : $lastWorkers".sout()
+                println(lastWorkers)
+                collectLastWorker(dest, fileName, lastWorkers)
                 return FilterAction.noTransform
             }
             if (nowGroup.isNullOrEmpty()) {
@@ -108,23 +147,23 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
         return FilterAction.transformNow
     }
 
-    private fun collectLastWorker(
+    @Synchronized
+    protected fun collectLastWorker(
         dest: File,
         fileName: String,
         lastGroup: List<DOCTOR>
     ) {
-        val temp = localLastFile.get()
-        if (temp == null) {
-            val lastFile = LastFile<DOCTOR>(dest, mutableMapOf(), jar = true)
-            localLastFile.set(lastFile)
-            lastProcessedFiles.add(lastFile)
-        } else if (temp.dest.name == dest.name) {
-            val lastFile = LastFile<DOCTOR>(dest, mutableMapOf(), jar = true)
-            localLastFile.set(lastFile)
-            lastProcessedFiles.add(lastFile)
+        val lastFile = lastProcessedFiles.find {
+            it.dest.path == dest.path
+        } ?: LastFile(dest, mutableMapOf(fileName to mutableSetOf<DOCTOR>()), jar = dest.isJar()).apply {
+            lastProcessedFiles.add(this)
         }
-        val lastFile = localLastFile.get()
-        lastFile.doctors[fileName] = lastGroup
+        if (lastFile.doctors[fileName] == null) {
+            lastFile.doctors[fileName] = lastGroup.toMutableSet()
+        } else {
+            lastFile.doctors[fileName]!!.addAll(lastGroup)
+        }
+        " # ${this.javaClass.simpleName} >>> fond file to last : ${dest.name} >> doctors : ${lastFile.doctors[fileName]}".sout()
     }
 
     override fun surgery(classFileByte: ByteArray): ByteArray {
@@ -138,7 +177,10 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
 
     override fun surgeryOver() {
         if (lastProcessedFiles.isNotEmpty()) {
-            lastProcessedFiles.forEach { lastFile ->
+            val distincted = lastProcessedFiles.distinctBy {
+                it.dest.path
+            }
+            distincted.forEach { lastFile ->
                 or.submit {
                     when {
                         lastFile.jar -> repairJar(lastFile)
@@ -147,6 +189,7 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
                 }
             }
             or.await()
+            sp.save(gson.toJson(distincted))
         }
         doctors.forEach {
             it.surgeryOver()
@@ -159,7 +202,7 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
         " # ${this.javaClass.simpleName} >>> doctors: ${lastFile.doctors}".sout()
         " # ${this.javaClass.simpleName} >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
         lastFile.dest.repairJar { jarEntry, bytes ->
-            chiefDoctors.set(lastFile.doctors[jarEntry.name])
+            chiefDoctors.set(lastFile.doctors[jarEntry.name]?.toList())
             surgery(bytes)
         }
     }
@@ -176,27 +219,34 @@ abstract class ClassSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     }
 }
 
-class ClassTreeSurgery : ClassSurgeryImpl<ClassTreeDoctor>() {
-    init {
-        //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
-        ServiceLoader.load(ClassTreeDoctor::class.java).iterator().forEach {
+class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
+
+    override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
+        //利用SPI 全称为 (Service Provider Interface) 查找 实现类
+        return ServiceLoader.load(ClassTreeDoctor::class.java).iterator().asSequence().map {
             " # ${this.javaClass.simpleName} === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
-            doctors.add(it)
-        }
+            it.className to it
+        }.toMap().toMutableMap()
     }
 
     override fun doSurgery(doctors: List<ClassTreeDoctor>, classFileByte: ByteArray): ByteArray {
         if (doctors.isNullOrEmpty()) {
             return classFileByte
         }
-        return ClassWriter(ClassWriter.COMPUTE_MAXS).also { writer ->
+//        ClassWriter.COMPUTE_MAXS
+//        这种方式会自动计算上述 操作数栈和局部变量表的大小 但需要手动触发
+//        通过调用org.objectweb.asm.commons.LocalVariablesSorter#visitMaxs
+//        触发 参数可以随便写
+//        ClassWriter.COMPUTE_FRAMES
+//        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
+        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
             doctors.fold(ClassNode().also { originNode ->
-                ClassReader(classFileByte).accept(originNode, ClassReader.EXPAND_FRAMES)
-            }) { classNode, worker ->
+                ClassReader(classFileByte).accept(originNode, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
+            }) { classNode, doctor ->
                 try {
-                    worker.surgery(classNode)
+                    doctor.surgery(classNode)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    println("${classNode.name} > ${e.message}")
                     classNode
                 }
             }.accept(writer)
@@ -204,30 +254,37 @@ class ClassTreeSurgery : ClassSurgeryImpl<ClassTreeDoctor>() {
     }
 }
 
-class ClassVisitorSurgery : ClassSurgeryImpl<ClassVisitorDoctor>() {
-    init {
-        //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
-        ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().forEach {
+class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
+    override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
+        //利用SPI 全称为 (Service Provider Interface) 查找 实现类
+        return ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().asSequence().map {
             " # ${this.javaClass.simpleName} === ClassVisitorSurgery ==== ${it.javaClass.name}".sout()
-            doctors.add(it)
-        }
+            it.className to it
+        }.toMap().toMutableMap()
     }
 
     override fun doSurgery(doctors: List<ClassVisitorDoctor>, classFileByte: ByteArray): ByteArray {
         if (doctors.isNullOrEmpty()) {
             return classFileByte
         }
-        //COMPUTE_MAXS 说明使用ASM自动计算本地变量表最大值和操作数栈的最大值
-        return ClassWriter(ClassWriter.COMPUTE_MAXS).also {
+//        ClassWriter.COMPUTE_MAXS
+//        这种方式会自动计算上述 操作数栈和局部变量表的大小 但需要手动触发
+//        通过调用org.objectweb.asm.commons.LocalVariablesSorter#visitMaxs
+//        触发 参数可以随便写
+//        ClassWriter.COMPUTE_FRAMES
+//        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
+        //https://www.jianshu.com/p/abd1b1b8d3f3
+        //https://www.kingkk.com/2020/08/ASM%E5%8E%86%E9%99%A9%E8%AE%B0/
+        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also {
             ClassReader(classFileByte).accept(doctors.fold(it as ClassVisitor) { acc, doctor ->
                 try {
                     doctor.surgery(acc)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    e.message?.sout()
                     acc
                 }
                 //EXPAND_FRAMES 说明在读取 class 的时候同时展开栈映射帧(StackMap Frame)
-            }, ClassReader.EXPAND_FRAMES)
+            }, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
         }.toByteArray()
     }
 }

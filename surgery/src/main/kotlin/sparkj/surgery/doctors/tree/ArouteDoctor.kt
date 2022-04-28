@@ -1,4 +1,4 @@
-package sparkj.surgery.doctors
+package sparkj.surgery.doctors.tree
 
 import sparkj.surgery.more.FilterAction
 import sparkj.surgery.more.*
@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import groovyjarjarasm.asm.Opcodes
 import org.objectweb.asm.tree.*
+import sparkj.surgery.JTAG
 import sparkj.surgery.more.isJar
 
 /**
@@ -22,9 +23,18 @@ const val arouterFilePrefix = "ARouter$$"
 const val logisticsCenterClass = "LogisticsCenter"
 const val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
 
-class ArouteDoctor : ClassTreeDoctor {
+class ArouteDoctor : ClassTreeDoctor() {
+    //需要缓存起来 然后读取 过滤重复
+    private val routesClassNames = mutableSetOf<String>()
+    @Transient
+    private val isIncrementalRoutesClassNames = mutableSetOf<String>()
 
-    private val routesClassNames = mutableListOf<String>()
+    override fun toString(): String {
+        if(routesClassNames.isEmpty()){
+            return super.toString()
+        }
+        return "${super.toString()}>$routesClassNames"
+    }
 
     override fun surgeryPrepare() {
         " # ${this.javaClass.simpleName} === surgeryPrepare ==== ".sout()
@@ -42,8 +52,11 @@ class ArouteDoctor : ClassTreeDoctor {
             val name = className()
             if (name.contains(arouterFilePrefix)) {
                 val router = className()
+                println(routesClassNames)
                 " # ${this.javaClass.simpleName} .. keep $router  from  ${file.name}".sout()
-                routesClassNames.add(router)
+                if (routesClassNames.add(router)) {
+                    isIncrementalRoutesClassNames.add(router)
+                }
                 return FilterAction.noTransform
             } else if (name.endsWith(logisticsCenterClass)) {
                 " # ${this.javaClass.simpleName} >> fond LogisticsCenter [in] ${file.path}".sout()
@@ -54,7 +67,9 @@ class ArouteDoctor : ClassTreeDoctor {
             if (name.contains(arouterFilePrefix)) {
                 val router = className()
                 " # ${this.javaClass.simpleName} .. keep $router  from  ${file.name}".sout()
-                routesClassNames.add(router)
+                if (routesClassNames.add(router)) {
+                    isIncrementalRoutesClassNames.add(router)
+                }
                 return FilterAction.noTransform
             }
         }
@@ -62,16 +77,20 @@ class ArouteDoctor : ClassTreeDoctor {
     }
 
     override fun surgery(classNode: ClassNode): ClassNode {
-        " # ${this.javaClass.simpleName} ====== surgery router size: ${routesClassNames.size} ======".sout()
+        if (isIncrementalRoutesClassNames.size == 0) {
+            " # ${this.javaClass.simpleName} ====== surgery router size: 0 ======".sout()
+            return classNode
+        }
+        " # ${this.javaClass.simpleName} ====== surgery router size: ${isIncrementalRoutesClassNames.size} ======".sout()
         classNode.methods.find {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
             insn.findAll(Opcodes.RETURN,Opcodes.ATHROW).forEach { ret ->
-                insn.insertLogCodeBefore(ret,"Surgery","$logisitscCenter --> visitInsn")
+                insn.insertLogCodeBefore(ret, JTAG,"$logisitscCenter --> visitInsn")
 //                insn.insertBefore(ret, LdcInsnNode("Surgery"))
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))
-                routesClassNames.onEach {
+                isIncrementalRoutesClassNames.onEach {
                     "# ${this.javaClass.simpleName} > Transforming $it".sout()
                     insn.insertBefore(ret, LdcInsnNode(it))
                     insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, logisitscCenter, "register", "(Ljava/lang/String;)V", false))
@@ -82,6 +101,6 @@ class ArouteDoctor : ClassTreeDoctor {
     }
 
     override fun surgeryOver() {
-        " # ${this.javaClass.simpleName} === finishOperate ==== ${javaClass.name}".sout()
+        " # ${this.javaClass.simpleName} === surgeryOver ==== ${javaClass.name}".sout()
     }
 }

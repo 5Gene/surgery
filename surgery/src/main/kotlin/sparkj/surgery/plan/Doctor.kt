@@ -3,6 +3,7 @@ package sparkj.surgery.plan
 import org.objectweb.asm.ClassVisitor
 import sparkj.surgery.more.FilterAction
 import org.objectweb.asm.tree.ClassNode
+import sparkj.surgery.more.safeAs
 import sparkj.surgery.more.sout
 import java.io.File
 
@@ -25,10 +26,30 @@ interface ClassDoctor {
     fun surgeryOver()
 }
 
-interface ClassTreeDoctor : ClassDoctor {
-    fun surgery(classNode: ClassNode): ClassNode
+abstract class ClassTreeDoctor : ClassDoctor {
+    val className: String = this.javaClass.name
+
+    final override fun equals(other: Any?): Boolean {
+        return className == other.safeAs<ClassTreeDoctor>()?.className
+    }
+
+    final override fun hashCode(): Int {
+        return className.hashCode()
+    }
+
+    abstract fun surgery(classNode: ClassNode): ClassNode
 }
 
-interface ClassVisitorDoctor : ClassDoctor {
-    fun surgery(visitor: ClassVisitor): ClassVisitor
+abstract class ClassVisitorDoctor : ClassDoctor {
+    val className: String = this.javaClass.name
+
+    final override fun equals(other: Any?): Boolean {
+        return className == other.safeAs<ClassVisitorDoctor>()?.className
+    }
+
+    final override fun hashCode(): Int {
+        return className.hashCode()
+    }
+
+    abstract fun surgery(visitor: ClassVisitor): ClassVisitor
 }

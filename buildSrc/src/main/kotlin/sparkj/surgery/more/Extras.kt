@@ -37,6 +37,40 @@ fun String.isModuleJar(): Boolean {
     return this == "classes.jar"
 }
 
+fun File.filterJar():Boolean{
+    return name.startsWith("jetified-")
+            ||name.startsWith("core-")
+            ||name.startsWith("drawerlayout-")
+            ||name.startsWith("vectordrawable-")
+            ||name.startsWith("dynamicanimation-")
+            ||name.startsWith("localbroadcastmanager-")
+            ||name.startsWith("navigation-")
+            ||name.startsWith("viewpager-")
+            ||name.startsWith("coordinatorlayout-")
+            ||name.startsWith("legacy-")
+            ||name.startsWith("loader-")
+            ||name.startsWith("customview-")
+            ||name.startsWith("recyclerview-")
+            ||name.startsWith("recyclerview-")
+            ||name.startsWith("swiperefreshlayout-")
+            ||name.startsWith("transition-")
+            ||name.startsWith("cardview-")
+            ||name.startsWith("slidingpanelayout-")
+            ||name.startsWith("versionedparcelable-")
+            ||name.startsWith("constraintlayout-")
+            ||name.startsWith("material-")
+            ||name.startsWith("appcompat-")
+            ||name.startsWith("annotation-")
+            ||name.startsWith("lifecycle-")
+            ||name.startsWith("print-")
+            ||name.startsWith("collection-")
+            ||name.startsWith("cursoradapter-")
+            ||name.startsWith("media-")
+            ||name.startsWith("asynclayoutinflater-")
+            ||name.startsWith("fragment-")
+            ||name.startsWith("interpolator-")
+}
+
 /**
  * review的时候过滤
  */
@@ -194,3 +228,5 @@ inline fun InputStream.review(wizard: (ByteArray) -> ByteArray = { it -> it }): 
 }
 
 inline fun <reified T> Any?.safeAs(): T? = this as? T
+
+
