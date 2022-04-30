@@ -1,14 +1,13 @@
-package sparkj.surgery.doctors.tree
+package zu.yun.surgery.doctors.tree
 
-import sparkj.surgery.more.FilterAction
-import sparkj.surgery.more.*
-import sparkj.surgery.plan.ClassTreeDoctor
+import com.google.auto.service.AutoService
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
-import groovyjarjarasm.asm.Opcodes
 import org.objectweb.asm.tree.*
-import sparkj.surgery.JTAG
-import sparkj.surgery.more.isJar
+import ospl.sparkj.surgery.api.ClassTreeDoctor
+import ospl.sparkj.surgery.api.FilterAction
+import ospl.surgery.helper.*
 
 /**
  * @author yun.
@@ -22,7 +21,9 @@ const val loadRouterMap = "loadRouterMap"
 const val arouterFilePrefix = "ARouter$$"
 const val logisticsCenterClass = "LogisticsCenter"
 const val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
+const val JTAG = "surgery"
 
+@AutoService(ClassTreeDoctor::class)
 class ArouteDoctor : ClassTreeDoctor() {
     //需要缓存起来 然后读取 过滤重复
     private val routesClassNames = mutableSetOf<String>()

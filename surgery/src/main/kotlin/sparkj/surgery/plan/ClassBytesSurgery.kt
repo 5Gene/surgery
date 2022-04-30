@@ -1,6 +1,5 @@
 package sparkj.surgery.plan
 
-import com.android.build.api.transform.Status
 import org.jetbrains.kotlin.com.google.gson.Gson
 import org.jetbrains.kotlin.com.google.gson.JsonParser
 import org.objectweb.asm.ClassReader
@@ -8,13 +7,15 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
 import com.google.auto.service.AutoService
+import ospl.sparkj.surgery.api.*
 import sparkj.surgery.Dean
 import sparkj.surgery.JSP
-import sparkj.surgery.more.*
 import sparkj.surgery.or.OperatingRoom
 import java.io.File
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import ospl.surgery.helper.*
+import sparkj.surgery.more.ExtendClassWriter
 
 /**
  * @author yun.
@@ -23,8 +24,13 @@ import java.util.concurrent.CopyOnWriteArrayList
  * @since [https://github.com/ZuYun]
  * <p><a href="https://github.com/ZuYun">github</a>
  */
+data class LastFile<DOCTOR>(
+    val dest: File,
+    val doctors: MutableMap<String, MutableSet<DOCTOR>>,
+    val jar: Boolean = false
+)
 
-interface ClassSurgery {
+interface ClassBytesSurgery {
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
     fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, status: Status, className: () -> String): FilterAction
@@ -32,7 +38,7 @@ interface ClassSurgery {
     fun surgeryOver()
 }
 
-abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
+abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     private val lastProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
     private val localLastFile = ThreadLocal<LastFile<DOCTOR>>()
     private val chiefDoctors = ThreadLocal<List<DOCTOR>>()
@@ -220,7 +226,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     }
 }
 
-@AutoService(ClassSurgery::class)
+@AutoService(ClassBytesSurgery::class)
 class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
@@ -256,7 +262,7 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
     }
 }
 
-@AutoService(ClassSurgery::class)
+@AutoService(ClassBytesSurgery::class)
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类

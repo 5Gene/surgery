@@ -1,19 +1,20 @@
-package sparkj.surgery.more
+package ospl.surgery.helper
 
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
-import sparkj.surgery.JAPI
 import java.lang.reflect.Modifier
-
 
 /**
  * @author yun.
- * @date 2021/9/9
+ * @date 2022/4/30
  * @des [一句话描述]
- * @since [https://github.com/ZuYun]
- * <p><a href="https://github.com/ZuYun">github</a>
+ * @since [https://github.com/mychoices]
+ * <p><a href="https://github.com/mychoices">github</a>
  */
+
+const val JAPI = Opcodes.ASM9
+
 fun logCode(mv: MethodVisitor, tag: String, msg: String) {
     mv.visitLdcInsn(tag)
     mv.visitLdcInsn(msg)

@@ -1,11 +1,10 @@
-package sparkj.surgery.more
+package ospl.surgery.helper
 
 import org.apache.commons.io.FileUtils
-import org.jetbrains.kotlin.com.google.gson.Gson
-import org.jetbrains.kotlin.com.google.gson.JsonObject
-import sparkj.surgery.Dean
 import java.io.File
 import java.io.InputStream
+import java.nio.file.Files.move
+import java.nio.file.StandardCopyOption
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -13,29 +12,11 @@ import java.util.zip.ZipEntry
 
 /**
  * @author yun.
- * @date 2022/3/31
+ * @date 2022/4/30
  * @des [一句话描述]
- * @since [https://github.com/ZuYun]
- * <p><a href="https://github.com/ZuYun">github</a>
+ * @since [https://github.com/mychoices]
+ * <p><a href="https://github.com/mychoices">github</a>
  */
-
-enum class FilterAction {
-    noTransform, transformLast, transformNow, transformNowLast
-}
-
-data class LastFile<DOCTOR>(
-    val dest: File,
-    val doctors: MutableMap<String, MutableSet<DOCTOR>>,
-    val jar: Boolean = false
-)
-
-fun String.log() {
-    Dean.context.project?.logger?.info("✨ $this ")
-}
-
-fun String.isModuleJar(): Boolean {
-    return this == "classes.jar"
-}
 
 fun File.filterJar():Boolean{
     return name.startsWith("jetified-")
@@ -69,45 +50,6 @@ fun File.filterJar():Boolean{
             ||name.startsWith("asynclayoutinflater-")
             ||name.startsWith("fragment-")
             ||name.startsWith("interpolator-")
-}
-
-/**
- * review的时候过滤
- */
-fun String.skipByFileName(): Boolean {
-    return !isClass() || isBindingClass() || isBuildConfigClass() || isRClass()
-}
-
-fun String.className(): String {
-    return substringBeforeLast(".").replace("/", ".")
-}
-
-fun String.isClass(): Boolean {
-    return this.endsWith(".class")
-}
-
-fun String.isBuildConfigClass(): Boolean {
-    return this == "BuildConfig.class"
-}
-
-fun String.isBindingClass(): Boolean {
-    return this.endsWith("Binding.class")
-}
-
-fun String.isRClass(): Boolean {
-    return startsWith("R$")||startsWith("R.")
-}
-
-fun String.toPackageName(): String {
-    return substring(0, this.indexOf(".class")).replace("/|\\\\", ".")
-}
-
-fun String.isJar(): Boolean {
-    return endsWith(".jar")
-}
-
-fun Any.sout() {
-    println(" $ Jspark > $this")
 }
 
 /**
@@ -226,7 +168,3 @@ inline fun JarFile.scan(jarWizard: (srcJarEntry: JarEntry) -> Unit) {
 inline fun InputStream.review(wizard: (ByteArray) -> ByteArray = { it -> it }): ByteArray {
     return wizard(readBytes())
 }
-
-inline fun <reified T> Any?.safeAs(): T? = this as? T
-
-

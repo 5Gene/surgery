@@ -4,7 +4,7 @@ plugins {
 
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
-    set("ARTIFACT_ID", "surgery-api")
+    set("ARTIFACT_ID", "surgery-helper")
     set("VERSION", "1.0.1")
 }
 apply("../publish-plugin.gradle")
@@ -15,4 +15,5 @@ dependencies{
     implementation("org.ow2.asm:asm-commons:9.3")
     implementation("org.ow2.asm:asm-tree:9.3")
     implementation("org.ow2.asm:asm-util:9.3")
+    implementation("commons-io:commons-io:2.10.0")
 }

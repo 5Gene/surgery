@@ -8,6 +8,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import sparkj.surgery.plan.ProjectSurgeryImpl
 import java.util.concurrent.TimeUnit
+import ospl.surgery.helper.*
 
 /**
  * @author yun.
@@ -91,10 +92,10 @@ class Surgery constructor(val project: Project) : Transform() {
                 " # ${this.javaClass.simpleName} ***** surgeryOnJar incremental: ${jar.status} : ${jar.file.name}".sout()
                 when (jar.status!!) {
                     Status.NOTCHANGED -> {
-                        surgery.surgeryOnJar(jar.file, destJarFile, Status.NOTCHANGED)
+                        surgery.surgeryOnJar(jar.file, destJarFile, ospl.sparkj.surgery.api.Status.NOTCHANGED)
                     }
                     Status.ADDED, Status.CHANGED -> {
-                        surgery.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
+                        surgery.surgeryOnJar(jar.file, destJarFile, ospl.sparkj.surgery.api.Status.ADDED)
                     }
                     Status.REMOVED -> {
                         if (destJarFile.exists()) {
@@ -104,7 +105,7 @@ class Surgery constructor(val project: Project) : Transform() {
                 }
             } else {
                 " # ${this.javaClass.simpleName} ***** surgeryOnJar: ${jar.file.name}".sout()
-                surgery.surgeryOnJar(jar.file, destJarFile, Status.ADDED)
+                surgery.surgeryOnJar(jar.file, destJarFile, ospl.sparkj.surgery.api.Status.ADDED)
             }
         }
     }
@@ -131,10 +132,10 @@ class Surgery constructor(val project: Project) : Transform() {
                     when (entry.value!!) {
                         Status.NOTCHANGED -> {
                             //主module下的未改变文件不会被遍历到这，子module的代码会被打包成 class.jar 不会走这里
-                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.NOTCHANGED)
+                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, ospl.sparkj.surgery.api.Status.NOTCHANGED)
                         }
                         Status.ADDED, Status.CHANGED -> {
-                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, Status.ADDED)
+                            surgery.surgeryOnFile(entry.key, srcDirectory, destDirectory, ospl.sparkj.surgery.api.Status.ADDED)
                         }
                         Status.REMOVED -> {
                             val path = entry.key.absolutePath.replace(srcDirectory.absolutePath, destDirectory.absolutePath)
@@ -148,7 +149,7 @@ class Surgery constructor(val project: Project) : Transform() {
             } else {
                 " # ${this.javaClass.simpleName} ***** surgeryOnDirectory: ${srcDirectory.name}".sout()
                 srcDirectory.walk().filter { it.isFile }.forEach {
-                    surgery.surgeryOnFile(it, srcDirectory, destDirectory, Status.ADDED)
+                    surgery.surgeryOnFile(it, srcDirectory, destDirectory, ospl.sparkj.surgery.api.Status.ADDED)
                 }
             }
         }
