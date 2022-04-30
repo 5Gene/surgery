@@ -10,7 +10,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
     set("ARTIFACT_ID", "surgery")
-    set("VERSION", "1.0.1")
+    set("VERSION", "1.0.2")
 }
 //apply {
 //    from("../publish.gradle.kts")
@@ -24,9 +24,6 @@ dependencies{
     ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
     implementation("com.google.auto.service:auto-service-annotations:1.0.1")
-
-    implementation("ospl.sparkj.plugin:surgery-api:1.0.0")
-    implementation("ospl.sparkj.plugin:surgery-helper:1.0.0")
 
     implementation("org.ow2.asm:asm:9.3")
     implementation("org.ow2.asm:asm-commons:9.3")
@@ -45,7 +42,7 @@ gradlePlugin {
     plugins {
         create("surgery") {
             id = "surgery"
-            implementationClass = "sparkj.surgery.Hospital"
+            implementationClass = "ospl.surgery.plugin.Hospital"
             displayName = "${id}.gradle.plugin"
             description = project.description ?: project.name
         }

@@ -5,7 +5,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
     set("ARTIFACT_ID", "surgery-helper")
-    set("VERSION", "1.0.1")
+    set("VERSION", "1.0.3")
 }
 apply("../publish-plugin.gradle")
 

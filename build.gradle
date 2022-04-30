@@ -2,10 +2,7 @@
 
 buildscript {
     dependencies {
-        classpath "ospl.sparkj.plugin:surgery:1.0.1"
-        classpath "ospl.sparkj.plugin:surgery-api:1.0.1"
-        classpath "ospl.sparkj.plugin:surgery-helper:1.0.1"
-        classpath "ospl.sparkj.plugin:surgery-doctors:1.0.0-autoservice"
+        classpath "ospl.sparkj.plugin:surgery:1.0.2"
     }
 }
 
