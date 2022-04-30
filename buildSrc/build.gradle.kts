@@ -30,6 +30,7 @@ dependencies{
     implementation("org.ow2.asm:asm-util:9.3")
     implementation("ospl.sparkj.plugin:surgery-api:1.0.3")
     implementation("ospl.sparkj.plugin:surgery-helper:1.0.3")
+    implementation("ospl.sparkj.plugin:surgery-doctors:1.0.3")
     implementation("commons-io:commons-io:2.10.0")
 }
 
