@@ -5,13 +5,14 @@ plugins {
     id 'surgery'
 }
 
+
 android {
-    compileSdk 32
+    compileSdk BuildConfig.compileSdkVersion
 
     defaultConfig {
         applicationId "spark.surgery"
-        minSdk 21
-        targetSdk 32
+        minSdk BuildConfig.minSdkVersion
+        targetSdk BuildConfig.targetSdkVersion
         versionCode 1
         versionName "1.0"
 

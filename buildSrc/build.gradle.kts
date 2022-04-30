@@ -6,8 +6,7 @@ plugins {
     this.`kotlin-dsl`
     id("java-gradle-plugin")
     id("maven-publish")
-//    id("kotlin-kapt")
-//    kotlin("jvm") version "1.6.20"
+//    id("com.google.devtools.ksp")
 }
 apply(plugin = "kotlin-kapt")
 
@@ -23,7 +22,9 @@ repositories {
 //思路和booster一样 一个plugin一次文件复制，执行所有transform
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
-//    kapt("com.google.auto.service:auto-service:1.0")
+//    ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
+    // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
+    implementation("com.google.auto.service:auto-service-annotations:1.0.1")
     implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:2.3.0")
 //    implementation(localGroovy())
     implementation(gradleApi())
