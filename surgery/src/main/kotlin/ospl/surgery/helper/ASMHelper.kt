@@ -16,16 +16,24 @@ import java.lang.reflect.Modifier
 const val JAPI = Opcodes.ASM9
 
 fun logCode(mv: MethodVisitor, tag: String, msg: String) {
+    logCode(mv, "i", tag, msg)
+}
+
+fun logCode(mv: MethodVisitor, level: String, tag: String, msg: String) {
     mv.visitLdcInsn(tag)
     mv.visitLdcInsn(msg)
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false)
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Log", level, "(Ljava/lang/String;Ljava/lang/String;)I", false)
     mv.visitInsn(Opcodes.POP) //log.i有返回值 需要扔掉
 }
 
 fun MethodVisitor.addLogCode(tag: String, msg: String) {
+    addLogCode("i", tag, msg) //log.i有返回值 需要扔掉
+}
+
+fun MethodVisitor.addLogCode(level: String, tag: String, msg: String) {
     visitLdcInsn(tag)
     visitLdcInsn(msg)
-    visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false)
+    visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Log", level, "(Ljava/lang/String;Ljava/lang/String;)I", false)
     visitInsn(Opcodes.POP) //log.i有返回值 需要扔掉
 }
 
@@ -34,9 +42,16 @@ fun MethodNode.copy(): MethodNode {
 }
 
 fun InsnList.insertLogCodeBefore(ret: AbstractInsnNode, tag: String, msg: String) {
+    insertLogCodeBefore(ret, "i", tag, msg)
+}
+
+fun InsnList.insertLogCodeBefore(ret: AbstractInsnNode, level: String, tag: String, msg: String) {
     insertBefore(ret, LdcInsnNode(tag))
     insertBefore(ret, LdcInsnNode(msg))
-    insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))
+    insertBefore(
+        ret,
+        MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", level, "(Ljava/lang/String;Ljava/lang/String;)I", false)
+    )
     insertBefore(ret, InsnNode(Opcodes.POP)) //log.i有返回值 扔掉
 }
 

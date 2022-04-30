@@ -21,5 +21,5 @@ dependencies{
     implementation("org.ow2.asm:asm-tree:9.3")
     implementation("org.ow2.asm:asm-util:9.3")
     implementation("ospl.sparkj.plugin:surgery-api:1.0.3")
-    implementation("ospl.sparkj.plugin:surgery-helper:1.0.2")
+    implementation("ospl.sparkj.plugin:surgery-helper:1.0.3")
 }

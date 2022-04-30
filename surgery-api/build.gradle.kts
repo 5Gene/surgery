@@ -15,5 +15,5 @@ dependencies{
     api("org.ow2.asm:asm-commons:9.3")
     api("org.ow2.asm:asm-tree:9.3")
     api("org.ow2.asm:asm-util:9.3")
-    api("ospl.sparkj.plugin:surgery-helper:1.0.2")
+    api("ospl.sparkj.plugin:surgery-helper:1.0.3")
 }

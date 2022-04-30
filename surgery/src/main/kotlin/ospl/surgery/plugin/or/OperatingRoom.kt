@@ -18,14 +18,14 @@ class OperatingRoom {
     private val features: MutableList<java.util.concurrent.Future<*>> = mutableListOf()
 
     fun submit(task: Runnable) {
-        task.run()
-//        val feature = workExecutor.submit(task)
-//        features.add(feature)
+//        task.run()
+        val feature = workExecutor.submit(task)
+        features.add(feature)
     }
 
     fun await() {
-//        while (features.size > 0) {
-//            features.removeFirst().get()
-//        }
+        while (features.size > 0) {
+            features.removeFirst().get()
+        }
     }
 }

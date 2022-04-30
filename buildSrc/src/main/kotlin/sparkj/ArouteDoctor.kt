@@ -1,4 +1,4 @@
-package ospl.surgery.doctors.tree
+package sparkj
 
 import com.google.auto.service.AutoService
 import org.objectweb.asm.Opcodes
@@ -82,7 +82,7 @@ class ArouteDoctor : ClassTreeDoctor() {
             " # ${this.javaClass.simpleName} ====== surgery router size: 0 ======".sout()
             return classNode
         }
-        " # ${this.javaClass.simpleName} ====== surgery router size: ${isIncrementalRoutesClassNames.size} ======".sout()
+        " # ${this.javaClass.simpleName} ====== surgery router size:=====> ${isIncrementalRoutesClassNames.size} ======".sout()
         classNode.methods.find {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
@@ -92,7 +92,7 @@ class ArouteDoctor : ClassTreeDoctor() {
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))
                 isIncrementalRoutesClassNames.onEach {
-                    "# ${this.javaClass.simpleName} > Transforming $it".sout()
+                    "# ${this.javaClass.simpleName} > Transforming --- $it".sout()
                     insn.insertBefore(ret, LdcInsnNode(it))
                     insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, logisitscCenter, "register", "(Ljava/lang/String;)V", false))
                 }
