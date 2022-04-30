@@ -1,12 +1,9 @@
 package sparkj.surgery
 
-import groovyjarjarasm.asm.Opcodes
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.findByType
 import java.util.*
 import sparkj.surgery.more.*
-import sparkj.surgery.plan.ClassSurgery
 
 /**
  * @author yun.
@@ -29,7 +26,11 @@ class Hospital : Plugin<Project> {
 //                if (args.any(predicate)) {
 //
 //                }
-                val android = project.extensions.findByType<com.android.build.gradle.BaseExtension>()
+
+//                val android = project.extensions.findByType<com.android.build.gradle.BaseExtension>()
+//                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
+                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
+                println(project.extensions.findByName("android"))
                 "project name: ${project.name}  $android  ${android?.transforms}".sout()
                 android?.registerTransform(Surgery(project))
             }

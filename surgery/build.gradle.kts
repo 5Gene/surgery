@@ -1,14 +1,12 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
 
-val kotlin_version = "1.6.20"
+val kotlin_version = "1.6.21"
 
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("kotlin-kapt")
-//    kotlin("jvm") version "1.6.20"
+    id("com.google.devtools.ksp")
+    kotlin("jvm")
 }
-apply(plugin = "kotlin-kapt")
 
 repositories {
     google()
@@ -22,9 +20,9 @@ repositories {
 //思路和booster一样 一个plugin一次文件复制，执行所有transform
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
-    kapt("com.google.auto.service:auto-service:1.0")
-    implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:2.3.0")
-//    implementation(localGroovy())
+    ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
+    // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
+    implementation("com.google.auto.service:auto-service-annotations:1.0.1")
     implementation(gradleApi())
     implementation("com.android.tools.build:gradle:7.1.3")
     implementation("com.android.tools.build:gradle-api:7.1.3")
@@ -47,6 +45,46 @@ gradlePlugin {
             displayName = "${id}.gradle.plugin"
             description = project.description ?: project.name
         }
+    }
+}
+
+
+//打包源码
+val sourcesJar by tasks.registering(Jar::class) {
+    //如果没有配置main会报错
+    from(sourceSets["main"].allSource)
+    archiveClassifier.set("sources")
+}
+
+// Gradle task -> publishing -> publish*
+publishing {
+    //配置maven仓库
+    repositories {
+        maven {
+            name = "GithubPackages"
+            url = uri("https://maven.pkg.github.com/Leaking/Hunter")
+            credentials {
+                username = "System.getenv('GITHUB_USER') ?: project.properties['GITHUB_USER']"
+                password = "System.getenv('GITHUB_PERSONAL_ACCESS_TOKEN') ?: project.properties['GITHUB_PERSONAL_ACCESS_TOKEN']"
+            }
+        }
+        maven {
+            //name会成为任务名字的一部分 publishSurgeryPublicationTo [LocalTest] Repository
+            name = "LocalTest"
+            // change to point to your repo, e.g. http://my.org/repo
+            url = uri("$rootDir/repo")
+        }
+    }
+    publications {
+        //name会成为任务名字的一部分 publish [Surgery] PublicationToLocalTestRepository
+        create<MavenPublication>("surgery") {
+            artifact(sourcesJar)
+            artifact("$buildDir/libs/surgery.jar")
+            groupId = "ospl"
+            artifactId = "surgery"
+            version = "1.0.0"
+        }
+
     }
 }
 

@@ -1,5 +1,6 @@
 package sparkj.surgery.doctors
 
+import com.google.auto.service.AutoService
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.AdviceAdapter
 import sparkj.surgery.doctors.tryfinally.TryFinally
@@ -7,7 +8,10 @@ import sparkj.surgery.doctors.tryfinally.TryFinallyVisitorDoctor
 import sparkj.surgery.doctors.tryfinally.actions.MethodTimeLog
 import sparkj.surgery.doctors.tryfinally.actions.MethodTrace
 import sparkj.surgery.more.*
+import sparkj.surgery.plan.ClassSurgery
+import sparkj.surgery.plan.ClassVisitorDoctor
 
+@AutoService(ClassVisitorDoctor::class)
 open class TryFinallyDoctor : TryFinallyVisitorDoctor() {
 
     private val enterActions: List<TryFinally> by lazy {

@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
+import com.google.auto.service.AutoService
 import sparkj.surgery.Dean
 import sparkj.surgery.JSP
 import sparkj.surgery.more.*
@@ -219,6 +220,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassSurgery {
     }
 }
 
+@AutoService(ClassSurgery::class)
 class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
@@ -254,6 +256,7 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
     }
 }
 
+@AutoService(ClassSurgery::class)
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
