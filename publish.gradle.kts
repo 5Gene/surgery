@@ -1,7 +1,10 @@
 val kotlin_v: String by extra
 
 //Publish_gradle  为什么不是 Build_gradle
+
 println("===========================$this =========")
+kotlin.RuntimeException("test").printStackTrace()
+println("===========================${this::class.java.superclass} =========")
 println("===========================${this::class} ==========")
 
 
