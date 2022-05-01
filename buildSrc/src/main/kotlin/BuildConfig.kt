@@ -8,7 +8,7 @@ object BuildConfig {
     const val versionName = "1.0.1"
 }
 
-const val kotlin_version = "1.6.20"
+const val kotlin_version = "1.6.21"
 //This version (1.0.1) of the Compose Compiler requires Kotlin version 1.5.21
 const val compose_version = "1.1.0"
 
