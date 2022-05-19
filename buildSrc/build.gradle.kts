@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
-
 val kotlin_version = "1.6.20"
 
 plugins {
@@ -28,8 +26,8 @@ dependencies{
     implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:2.3.0")
 //    implementation(localGroovy())
     implementation(gradleApi())
-    implementation("com.android.tools.build:gradle:7.1.3")
-    implementation("com.android.tools.build:gradle-api:7.1.3")
+    implementation("com.android.tools.build:gradle:7.2.0")
+    implementation("com.android.tools.build:gradle-api:7.2.0")
     implementation("org.ow2.asm:asm:9.3")
     implementation("org.ow2.asm:asm-analysis:9.3")
     implementation("org.ow2.asm:asm-commons:9.3")
