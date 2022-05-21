@@ -7,12 +7,10 @@ import java.io.File
 /**
  * @author yun.
  * @date 2022/4/30
- * @des [一句话描述]
- * @since [https://github.com/mychoices]
- * <p><a href="https://github.com/mychoices">github</a>
  */
 
 interface ClassDoctor {
+
     fun sout(msg: String) {
         println(" # ${this.javaClass.simpleName} >> $msg")
     }
@@ -24,6 +22,7 @@ interface ClassDoctor {
 }
 
 abstract class ClassTreeDoctor : ClassDoctor {
+    val tag = this.javaClass.simpleName
     val className: String = this.javaClass.name
 
     final override fun equals(other: Any?): Boolean {
@@ -38,6 +37,7 @@ abstract class ClassTreeDoctor : ClassDoctor {
 }
 
 abstract class ClassVisitorDoctor : ClassDoctor {
+    val tag = this.javaClass.simpleName
     val className: String = this.javaClass.name
 
     final override fun equals(other: Any?): Boolean {

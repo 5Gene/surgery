@@ -1,4 +1,4 @@
-package sparkj
+package sparkj.doctor
 
 import com.google.auto.service.AutoService
 import org.objectweb.asm.Opcodes
@@ -23,7 +23,7 @@ const val logisticsCenterClass = "LogisticsCenter"
 const val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
 const val JTAG = "surgery"
 
-@AutoService(ClassTreeDoctor::class)
+//@AutoService(ClassTreeDoctor::class)
 class ArouteDoctor : ClassTreeDoctor() {
     //需要缓存起来 然后读取 过滤重复
     private val routesClassNames = mutableSetOf<String>()

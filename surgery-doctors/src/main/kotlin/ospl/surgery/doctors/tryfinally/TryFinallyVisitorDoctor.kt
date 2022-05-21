@@ -22,7 +22,7 @@ import java.util.*
 open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
 
     override fun surgeryPrepare() {
-        " # ${this.javaClass.simpleName} === surgeryPrepare ==== ".sout()
+        " # $tag === surgeryPrepare ==== ".sout()
     }
 
     override fun filterByJar(jar: File): FilterAction {
@@ -41,7 +41,7 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
     }
 
     override fun surgeryOver() {
-        " # ${this.javaClass.simpleName} === surgery over ==== ".sout()
+        " # $tag === surgery over ==== ".sout()
     }
 
     open fun onMethodEnter(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter) {

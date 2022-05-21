@@ -10,7 +10,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
     set("ARTIFACT_ID", "surgery")
-    set("VERSION", "1.0.3")
+    set("VERSION", "1.0.4")
 }
 //apply {
 //    from("../publish.gradle.kts")
@@ -30,8 +30,8 @@ dependencies{
     implementation("org.ow2.asm:asm-commons:9.3")
     implementation("org.ow2.asm:asm-tree:9.3")
 
-    compileOnly("com.android.tools.build:gradle:7.1.3")
-    compileOnly("com.android.tools.build:gradle-api:7.1.3")
+    compileOnly("com.android.tools.build:gradle:7.2.0")
+    compileOnly("com.android.tools.build:gradle-api:7.2.0")
     compileOnly(gradleApi())
     compileOnly(kotlin("gradle-plugin", kotlin_version))
     compileOnly(kotlin("gradle-plugin-api", kotlin_version))

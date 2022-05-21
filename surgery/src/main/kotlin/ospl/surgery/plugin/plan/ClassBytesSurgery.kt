@@ -33,12 +33,21 @@ data class LastFile<DOCTOR>(
 interface ClassBytesSurgery {
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
-    fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, status: Status, className: () -> String): FilterAction
+    fun filterByClassName(
+        src: File,
+        dest: File,
+        isJar: Boolean,
+        fileName: String,
+        status: Status,
+        className: () -> String
+    ): FilterAction
+
     fun surgery(classFileByte: ByteArray): ByteArray
     fun surgeryOver()
 }
 
 abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
+    val tag = this.javaClass.simpleName
     private val lastProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
     private val localLastFile = ThreadLocal<LastFile<DOCTOR>>()
     private val chiefDoctors = ThreadLocal<List<DOCTOR>>()
@@ -46,7 +55,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     private val or = OperatingRoom()
     private val gson = Gson()
     private val sp by lazy {
-        JSP("${this.javaClass.simpleName}_class_surgery")
+        JSP("${tag}_class_surgery")
     }
 
     private val doctors by lazy {
@@ -76,9 +85,9 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                 }.toMutableMap()
                 LastFile(File(path), map, jar = path.isJar())
             }.toList())
-            " # ${this.javaClass.simpleName} >>> =============== cache ================== <<< ".sout()
-            " # ${this.javaClass.simpleName} >>> ${gson.toJson(lastProcessedFiles)} <<< ".sout()
-            " # ${this.javaClass.simpleName} >>> =============== cache ================== <<< ".sout()
+            " # $tag >>> =============== cache ================== <<< ".sout()
+            " # $tag >>> ${gson.toJson(lastProcessedFiles)} <<< ".sout()
+            " # $tag >>> =============== cache ================== <<< ".sout()
         }
         return doctorsMap.values
     }
@@ -108,7 +117,14 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     /**
      * 一个线程处理一个jar 这个方式是jar遍历jarEntry的时候执行的
      */
-    override fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, status: Status, className: () -> String): FilterAction {
+    override fun filterByClassName(
+        src: File,
+        dest: File,
+        isJar: Boolean,
+        fileName: String,
+        status: Status,
+        className: () -> String
+    ): FilterAction {
         var result = FilterAction.noTransform
         if (isJar) {
             val grouped = doctors.groupBy {
@@ -120,8 +136,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                 return FilterAction.noTransform
             }
             if (!lastGroup.isNullOrEmpty()) {
-                println(lastGroup)
-                println(lastGroup.size.toString())
+                "$tag > lastGroup : ${lastGroup.size} > $lastGroup".sout()
                 collectLastWorker(dest, fileName, lastGroup)
                 result = FilterAction.transformLast
             }
@@ -142,7 +157,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
             if (!lastGroup.isNullOrEmpty()) {
                 //只要有未来要处理的就不执行 以后在执行  以后执行的时候要把现在执行的也执行
                 val lastWorkers = if (nowGroup.isNullOrEmpty()) lastGroup else nowGroup + lastGroup
-                println(lastWorkers)
+                "$tag > lastWorkers > $lastWorkers".sout()
                 collectLastWorker(dest, fileName, lastWorkers)
                 return FilterAction.noTransform
             }
@@ -170,7 +185,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         } else {
             lastFile.doctors[fileName]!!.addAll(lastGroup)
         }
-        " # ${this.javaClass.simpleName} >>> fond file to last : ${dest.name} >> doctors : ${lastFile.doctors[fileName]}".sout()
+        " # $tag >>> fond file to last : ${dest.name} >> doctors : ${lastFile.doctors[fileName]}".sout()
     }
 
     override fun surgery(classFileByte: ByteArray): ByteArray {
@@ -204,10 +219,10 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     }
 
     private fun repairJar(lastFile: LastFile<DOCTOR>) {
-        " # ${this.javaClass.simpleName} >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
-        " # ${this.javaClass.simpleName} >>> fire: ${lastFile.dest}".sout()
-        " # ${this.javaClass.simpleName} >>> doctors: ${lastFile.doctors}".sout()
-        " # ${this.javaClass.simpleName} >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
+        " # $tag >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
+        " # $tag >>> fire: ${lastFile.dest}".sout()
+        " # $tag >>> doctors: ${lastFile.doctors}".sout()
+        " # $tag >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
         lastFile.dest.repairJar { jarEntry, bytes ->
             chiefDoctors.set(lastFile.doctors[jarEntry.name]?.toList())
             surgery(bytes)
@@ -215,10 +230,10 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     }
 
     private fun repairFile(lastFile: LastFile<DOCTOR>) {
-        " # ${this.javaClass.simpleName} >>> last repairFile file <<< ==================================================".sout()
-        " # ${this.javaClass.simpleName} >>> fire: ${lastFile.dest}".sout()
-        " # ${this.javaClass.simpleName} >>> doctors: ${lastFile.doctors}".sout()
-        " # ${this.javaClass.simpleName} >>> last repairFile file <<< ==================================================".sout()
+        " # $tag >>> last repairFile file <<< ==================================================".sout()
+        " # $tag >>> fire: ${lastFile.dest}".sout()
+        " # $tag >>> doctors: ${lastFile.doctors}".sout()
+        " # $tag >>> last repairFile file <<< ==================================================".sout()
         chiefDoctors.set(lastFile.doctors.values.flatten().toList())
         lastFile.dest.repair { bytes ->
             surgery(bytes)
@@ -231,10 +246,16 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
-        return ServiceLoader.load(ClassTreeDoctor::class.java).iterator().asSequence().map {
-            " # ${this.javaClass.simpleName} === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
-            it.className to it
-        }.toMap().toMutableMap()
+        val supers = mutableListOf<String>()
+        return ServiceLoader.load(ClassTreeDoctor::class.java).iterator().asSequence()
+            .onEach {
+                supers.add(it.javaClass.superclass.name)
+            }.filter {
+                !supers.contains(it.javaClass.name)
+            }.map {
+                " # $tag === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
+                it.className to it
+            }.toMap().toMutableMap()
     }
 
     override fun doSurgery(doctors: List<ClassTreeDoctor>, classFileByte: ByteArray): ByteArray {
@@ -249,7 +270,10 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 //        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
         return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
             doctors.fold(ClassNode().also { originNode ->
-                ClassReader(classFileByte).accept(originNode, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
+                ClassReader(classFileByte).accept(
+                    originNode,
+                    ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES
+                )
             }) { classNode, doctor ->
                 try {
                     doctor.surgery(classNode)
@@ -266,8 +290,15 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
-        return ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().asSequence().map {
-            " # ${this.javaClass.simpleName} === ClassVisitorSurgery ==== ${it.javaClass.name}".sout()
+        val supers = mutableListOf<String>()
+        return ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().asSequence()
+            .onEach {
+                supers.add(it.javaClass.superclass.name)
+            }.filter {
+                !supers.contains(it.javaClass.name)
+            }.map {
+            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}"
+                .sout()
             it.className to it
         }.toMap().toMutableMap()
     }

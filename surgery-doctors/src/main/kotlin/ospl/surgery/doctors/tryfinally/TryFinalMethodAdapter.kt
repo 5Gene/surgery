@@ -7,7 +7,15 @@ import org.objectweb.asm.commons.AdviceAdapter
 import ospl.surgery.helper.JAPI
 import ospl.surgery.helper.isReturn
 
-open class TryFinalMethodAdapter(val process: MethodProcess, val className: String, methodVisitor: MethodVisitor?, access: Int, name: String?, descriptor: String?) :
+open class TryFinalMethodAdapter(
+    val process: MethodProcess,
+    val className: String,
+    methodVisitor: MethodVisitor?,
+    access: Int,
+    name: String?,
+    descriptor: String?,
+    val hasTryfinalCode: Boolean = false//有try final的代码补充插入try-final会出问题
+) :
     AdviceAdapter(JAPI, methodVisitor, access, name, descriptor) {
 
     private val beforeOriginalCode: Label = Label()
@@ -18,6 +26,9 @@ open class TryFinalMethodAdapter(val process: MethodProcess, val className: Stri
 
     override fun visitCode() {
         process.onMethodEnter(className, methodName, mv, this)
+        if (hasTryfinalCode) {
+            super.visitCode()
+        }
         mv.visitTryCatchBlock(
             beforeOriginalCode,
             afterOriginalCode,
@@ -37,6 +48,9 @@ open class TryFinalMethodAdapter(val process: MethodProcess, val className: Stri
     }
 
     override fun visitMaxs(maxStack: Int, maxLocals: Int) {
+        if (hasTryfinalCode) {
+            super.visitMaxs(maxStack, maxLocals)
+        }
         mv.visitLabel(afterOriginalCode)
         process.onMethodError(className, methodName, mv, this)
         mv.visitInsn(Opcodes.ATHROW)

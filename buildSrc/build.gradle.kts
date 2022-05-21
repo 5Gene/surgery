@@ -1,4 +1,7 @@
 repositories {
+    maven{
+        url = uri("${rootDir.parentFile}/repo")
+    }
     gradlePluginPortal()
     google()
     mavenCentral()
@@ -11,11 +14,11 @@ repositories {
     }
 }
 
+val kotlin_version = "1.6.21"
 plugins {
     kotlin("jvm") version "1.6.21"
     id("com.google.devtools.ksp") version "1.6.21-1.0.5"
 }
-
 
 dependencies{
     ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
@@ -27,10 +30,13 @@ dependencies{
     implementation("org.ow2.asm:asm-commons:9.3")
     implementation("org.ow2.asm:asm-tree:9.3")
     implementation("org.ow2.asm:asm-util:9.3")
-    implementation("ospl.sparkj.plugin:surgery-api:1.0.3")
+    implementation("ospl.sparkj.plugin:surgery-api:1.0.4")
     implementation("ospl.sparkj.plugin:surgery-helper:1.0.3")
-    implementation("ospl.sparkj.plugin:surgery-doctors:1.0.3")
+    implementation("ospl.sparkj.plugin:surgery-doctors:1.0.4")
     implementation("commons-io:commons-io:2.10.0")
+//    implementation(kotlin("gradle-plugin", kotlin_version))
+//    implementation(kotlin("gradle-plugin-api", kotlin_version))
+    implementation("com.android.tools.build:gradle-api:7.2.0")
 }
 
 //https://github.com/tschuchortdev/kotlin-compile-testing

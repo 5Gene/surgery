@@ -1,8 +1,10 @@
 package ospl.surgery.doctors
 
 //import com.google.auto.service.AutoService
+import com.google.auto.service.AutoService
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.AdviceAdapter
+import ospl.surgery.api.ClassVisitorDoctor
 import ospl.surgery.doctors.tryfinally.TryFinally
 import ospl.surgery.doctors.tryfinally.TryFinallyVisitorDoctor
 import ospl.surgery.doctors.tryfinally.actions.MethodTimeLog
