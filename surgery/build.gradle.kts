@@ -10,7 +10,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
     set("ARTIFACT_ID", "surgery")
-    set("VERSION", "1.0.4")
+    set("VERSION", "1.0.5")
 }
 //apply {
 //    from("../publish.gradle.kts")

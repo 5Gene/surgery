@@ -268,21 +268,26 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 //        触发 参数可以随便写
 //        ClassWriter.COMPUTE_FRAMES
 //        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
-        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
-            doctors.fold(ClassNode().also { originNode ->
-                ClassReader(classFileByte).accept(
-                    originNode,
-                    ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES
-                )
-            }) { classNode, doctor ->
-                try {
-                    doctor.surgery(classNode)
-                } catch (e: Exception) {
-                    println("${classNode.name} > ${e.message}")
-                    classNode
-                }
-            }.accept(writer)
-        }.toByteArray()
+        try {
+            return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also { writer ->
+                doctors.fold(ClassNode().also { originNode ->
+                    ClassReader(classFileByte).accept(
+                        originNode,
+                        ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES
+                    )
+                }) { classNode, doctor ->
+                    try {
+                        doctor.surgery(classNode)
+                    } catch (e: Exception) {
+                        "$tag >>> error >>> ${classNode.name} > ${e.message}".sout()
+                        classNode
+                    }
+                }.accept(writer)
+            }.toByteArray()
+        } catch (e: Exception) {
+            "$tag >>> error >>> [byte to asm] > ${e.message}".sout()
+            return classFileByte
+        }
     }
 }
 
@@ -297,8 +302,7 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
             }.filter {
                 !supers.contains(it.javaClass.name)
             }.map {
-            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}"
-                .sout()
+            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
             it.className to it
         }.toMap().toMutableMap()
     }
@@ -315,17 +319,22 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
 //        不仅会计算上述 操作数栈和局部变量表的大小 还会自动计算StackMapFrames
         //https://www.jianshu.com/p/abd1b1b8d3f3
         //https://www.kingkk.com/2020/08/ASM%E5%8E%86%E9%99%A9%E8%AE%B0/
-        return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also {
-            ClassReader(classFileByte).accept(doctors.fold(it as ClassVisitor) { acc, doctor ->
-                try {
-                    doctor.surgery(acc)
-                } catch (e: Exception) {
-                    e.message?.sout()
-                    acc
-                }
-                //EXPAND_FRAMES 说明在读取 class 的时候同时展开栈映射帧(StackMap Frame)
-            }, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
-        }.toByteArray()
+        try {
+            return ExtendClassWriter(ClassWriter.COMPUTE_FRAMES).also {
+                ClassReader(classFileByte).accept(doctors.fold(it as ClassVisitor) { acc, doctor ->
+                    try {
+                        doctor.surgery(acc)
+                    } catch (e: Exception) {
+                        "$tag >>> error >>> [surgery] > ${e.message}".sout()
+                        acc
+                    }
+                    //EXPAND_FRAMES 说明在读取 class 的时候同时展开栈映射帧(StackMap Frame)
+                }, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
+            }.toByteArray()
+        } catch (e: Exception) {
+            "$tag >>> error >>> [byte to asm] > ${e.message}".sout()
+            return classFileByte
+        }
     }
 }
 
