@@ -6,6 +6,7 @@ plugins {
     kotlin("kapt")
     id("surgery")
 }
+// ./gradlew transformDebugClassesWithAsm
 //apply<ExamplePlugin>()
 
 android {

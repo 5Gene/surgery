@@ -29,6 +29,7 @@ import org.objectweb.asm.util.TraceClassVisitor
 import java.io.File
 import java.io.PrintWriter
 
+// ./gradlew transformDebugClassesWithAsm
 abstract class ExamplePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
