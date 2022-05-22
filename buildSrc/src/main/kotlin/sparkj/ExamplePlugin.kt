@@ -29,6 +29,8 @@ import org.objectweb.asm.util.TraceClassVisitor
 import java.io.File
 import java.io.PrintWriter
 
+// com.android.build.gradle.internal.dependency.AsmClassesTransform 入口以及注册
+// com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager
 // ./gradlew transformDebugClassesWithAsm
 abstract class ExamplePlugin : Plugin<Project> {
 
