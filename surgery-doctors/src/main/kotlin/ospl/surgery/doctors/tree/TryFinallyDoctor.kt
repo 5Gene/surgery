@@ -40,8 +40,12 @@ open class TryFinallyDoctor : ClassTreeDoctor(), MethodProcess {
     }
 
     override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar() && className().contains("Trace")) {
-            return FilterAction.noTransform
+        if (file.isJar()) {
+            val name = className()
+            if (name.endsWith("TraceCompat") || name.endsWith("Trace")) {
+                "$tag >> ignore $name".sout()
+                return FilterAction.noTransform
+            }
         }
         return FilterAction.transformNow
     }

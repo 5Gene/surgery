@@ -6,7 +6,7 @@
        maven {
            url = uri("https://maven.pkg.github.com/ZuYun/sparkj")
            credentials {
-               username = "ZuYun"
+               username = "\u005a\u0075\u0059\u0075\u006e"
                password = "\u0067\u0068\u0070\u005f\u0031\u0063\u0062\u0064\u004d\u004a\u0073\u005a\u0042\u0057\u0033\u006a\u0077\u0057\u0053\u004b\u006e\u0066\u0037\u0042\u0053\u0069\u0044\u006d\u0061\u0030\u0066\u0044\u0048\u0076\u0031\u007a\u0059\u0050\u0073\u0044"
            }
        }
@@ -18,9 +18,10 @@
    buildscript {
        dependencies {
            //只实现了plugin和transform分发没做任何修改 需要在buildSrc下自己实现
-           classpath "ospl.sparkj.plugin:surgery:1.0.3"
+           classpath "ospl.sparkj.plugin:surgery:1.0.4"
            //1:Arouter，2:为每个方法首尾插入trace
-           classpath "ospl.sparkj.plugin.surgery-doctors:1.0.1-autoservice"
+           classpath "ospl.sparkj.plugin:surgery-doctor-tryfinally:1.0"
+           classpath "ospl.sparkj.plugin:surgery-doctor-arouter:1.0"
        }
    }
    //使用插件
@@ -64,10 +65,12 @@
         implementation("org.ow2.asm:asm-commons:9.3")
         implementation("org.ow2.asm:asm-tree:9.3")
         implementation("org.ow2.asm:asm-util:9.3")
-        implementation("ospl.sparkj.plugin:surgery-api:1.0.3")
-        implementation("ospl.sparkj.plugin:surgery-helper:1.0.3")
-        implementation("ospl.sparkj.plugin:surgery-doctors:1.0.3")
         implementation("commons-io:commons-io:2.10.0")
+    
+        implementation("ospl.sparkj.plugin:surgery-api:1.0.4")
+        implementation("ospl.sparkj.plugin:surgery-helper:1.0.3")
+//        implementation("ospl.sparkj.plugin:surgery-doctor-arouter:1.0")
+//        implementation("ospl.sparkj.plugin:surgery-doctor-tryfinally:1.0")
     }
     ```
 
