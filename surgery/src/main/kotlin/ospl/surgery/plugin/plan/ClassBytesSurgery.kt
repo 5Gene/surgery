@@ -16,6 +16,7 @@ import ospl.surgery.helper.*
 import ospl.surgery.plugin.Dean
 import ospl.surgery.plugin.JSP
 import sparkj.surgery.more.ExtendClassWriter
+import java.lang.reflect.Modifier
 
 /**
  * @author yun.
@@ -277,7 +278,12 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
                     )
                 }) { classNode, doctor ->
                     try {
-                        doctor.surgery(classNode)
+                        if (Modifier.isInterface(classNode.access)) {
+                            "$tag > skip class [is interface] ${classNode.name}".sout()
+                            classNode
+                        } else {
+                            doctor.surgery(classNode)
+                        }
                     } catch (e: Exception) {
                         "$tag >>> error >>> ${classNode.name} > ${e.message}".sout()
                         classNode
@@ -302,9 +308,9 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
             }.filter {
                 !supers.contains(it.javaClass.name)
             }.map {
-            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
-            it.className to it
-        }.toMap().toMutableMap()
+                " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
+                it.className to it
+            }.toMap().toMutableMap()
     }
 
     override fun doSurgery(doctors: List<ClassVisitorDoctor>, classFileByte: ByteArray): ByteArray {
