@@ -26,7 +26,7 @@ println("===========================${this::class} ==========")
 //    repositories {
 //        maven {
 //            name = "GithubPackages"
-//            url = uri("https://maven.pkg.github.com/ZuYun/sparkj")
+//            url = uri("https://maven.pkg.github.com/5hmlA/sparkj")
 //            credentials {
 //                username = System.getenv("GITHUB_USER")
 //                password = System.getenv("GITHUB_TOKEN")

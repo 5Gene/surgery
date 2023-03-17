@@ -5,30 +5,31 @@ task sourceJar(type: Jar) {
     classifier "sources"
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "GithubPackages"
-            url = uri("https://maven.pkg.github.com/ZuYun/sparkj")
-            credentials {
-                username = System.getenv("GITHUB_USER")
-                password = System.getenv("GITHUB_TOKEN")
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                name = "GithubPackages"
+                url = uri("https://maven.pkg.github.com/5hmlA/sparkj")
+                credentials {
+                    username = System.getenv("GITHUB_USER")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+            maven {
+                //name会成为任务名字的一部分 publishSurgeryPublicationTo [LocalTest] Repository
+                name = 'LocalTest'
+                url = "${rootDir}/repo"
             }
         }
-        maven {
-            //name会成为任务名字的一部分 publishSurgeryPublicationTo [LocalTest] Repository
-            name = 'LocalTest'
-            url = "${rootDir}/repo"
-        }
-    }
-    publications {
-        //name会成为任务名字的一部分 publish [Surgery] PublicationToLocalTestRepository
-        surgery(MavenPublication) {
-            groupId project.ext.GROUP_ID
-            artifactId project.ext.ARTIFACT_ID
-            version project.ext.VERSION
-            artifact("$buildDir/libs/${project.ext.ARTIFACT_ID}.jar")
-            artifact(sourceJar)
+        publications {
+            //name会成为任务名字的一部分 publish [Surgery] PublicationToLocalTestRepository
+            surgery(MavenPublication) {
+                from components.java
+                groupId project.ext.GROUP_ID
+                artifactId project.ext.ARTIFACT_ID
+                version project.ext.VERSION
+            }
         }
     }
 }

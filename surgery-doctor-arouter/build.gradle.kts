@@ -6,7 +6,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "ospl.sparkj.plugin")
     set("ARTIFACT_ID", "surgery-doctor-arouter")
-    set("VERSION", "1.0")
+    set("VERSION", "1.0.5")
 }
 apply("../publish-plugin.gradle")
 
@@ -19,6 +19,6 @@ dependencies{
     api("org.ow2.asm:asm-commons:9.3")
     api("org.ow2.asm:asm-tree:9.3")
     api("org.ow2.asm:asm-util:9.3")
-    api("ospl.sparkj.plugin:surgery-api:1.0.4")
-    api("ospl.sparkj.plugin:surgery-helper:1.0.3")
+    api("ospl.sparkj.plugin:surgery-api:1.0.5")
+    api("ospl.sparkj.plugin:surgery-helper:1.0.5")
 }

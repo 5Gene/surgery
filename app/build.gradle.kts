@@ -45,7 +45,7 @@ android {
 }
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies {
-    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.core:core-ktx:1.7.10")
     implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("com.google.android.material:material:1.6.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.3")

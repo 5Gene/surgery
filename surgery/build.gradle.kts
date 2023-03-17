@@ -1,5 +1,5 @@
 
-val kotlin_version = "1.6.21"
+val kotlin_version = "1.7.10"
 
 plugins {
     id("java-gradle-plugin")
@@ -30,8 +30,8 @@ dependencies{
     implementation("org.ow2.asm:asm-commons:9.3")
     implementation("org.ow2.asm:asm-tree:9.3")
 
-    compileOnly("com.android.tools.build:gradle:7.2.0")
-    compileOnly("com.android.tools.build:gradle-api:7.2.0")
+    compileOnly("com.android.tools.build:gradle:7.2.2")
+    compileOnly("com.android.tools.build:gradle-api:7.2.2")
     compileOnly(gradleApi())
     compileOnly(kotlin("gradle-plugin", kotlin_version))
     compileOnly(kotlin("gradle-plugin-api", kotlin_version))

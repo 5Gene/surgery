@@ -14,10 +14,10 @@ repositories {
     }
 }
 
-val kotlin_version = "1.6.21"
+val kotlin_version = "1.7.10"
 plugins {
-    kotlin("jvm") version "1.6.21"
-    id("com.google.devtools.ksp") version "1.6.21-1.0.5"
+    kotlin("jvm") version "1.7.10"
+    id("com.google.devtools.ksp") version "1.7.10-1.0.6"
 }
 
 dependencies{
@@ -36,7 +36,7 @@ dependencies{
     implementation("commons-io:commons-io:2.10.0")
 //    implementation(kotlin("gradle-plugin", kotlin_version))
 //    implementation(kotlin("gradle-plugin-api", kotlin_version))
-    implementation("com.android.tools.build:gradle-api:7.2.0")
+    implementation("com.android.tools.build:gradle-api:7.2.2")
 }
 
 //https://github.com/tschuchortdev/kotlin-compile-testing
