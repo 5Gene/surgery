@@ -1,4 +1,4 @@
-package osp.surgery.doctor.arouter
+package osp.surgery.doctors.tree
 
 import com.google.auto.service.AutoService
 import org.objectweb.asm.Opcodes
@@ -26,11 +26,12 @@ const val JTAG = "surgery"
 class ArouteDoctor : ClassTreeDoctor() {
     //需要缓存起来 然后读取 过滤重复
     private val routesClassNames = mutableSetOf<String>()
+
     @Transient
     private val isIncrementalRoutesClassNames = mutableSetOf<String>()
 
     override fun toString(): String {
-        if(routesClassNames.isEmpty()){
+        if (routesClassNames.isEmpty()) {
             return super.toString()
         }
         return "${super.toString()}>$routesClassNames"
@@ -85,15 +86,24 @@ class ArouteDoctor : ClassTreeDoctor() {
         classNode.methods.find {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
-            insn.findAll(Opcodes.RETURN,Opcodes.ATHROW).forEach { ret ->
-                insn.insertLogCodeBefore(ret,"e", JTAG,"$logisitscCenter --> visitInsn")
+            insn.findAll(Opcodes.RETURN, Opcodes.ATHROW).forEach { ret ->
+                insn.insertLogCodeBefore(ret, "e", JTAG, "$logisitscCenter --> visitInsn")
 //                insn.insertBefore(ret, LdcInsnNode("Surgery"))
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))
                 isIncrementalRoutesClassNames.onEach {
                     "# $tag > Transforming $it".sout()
                     insn.insertBefore(ret, LdcInsnNode(it))
-                    insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, logisitscCenter, "register", "(Ljava/lang/String;)V", false))
+                    insn.insertBefore(
+                        ret,
+                        MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            logisitscCenter,
+                            "register",
+                            "(Ljava/lang/String;)V",
+                            false
+                        )
+                    )
                 }
             }
         }

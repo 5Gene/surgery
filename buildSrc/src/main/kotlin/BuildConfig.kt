@@ -1,9 +1,9 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    const val compileSdkVersion = 31
+    const val compileSdkVersion = 33
     const val minSdkVersion = 22
-    const val targetSdkVersion = 31
+    const val targetSdkVersion = 33
     const val versionCode = 10001
     const val versionName = "1.0.1"
 }

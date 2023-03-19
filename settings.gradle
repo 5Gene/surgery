@@ -37,7 +37,7 @@ rootProject.name = "surgery"
 include ':app'
 include ':surgery'
 include ':surgery-api'
-include ':surgery-doctors'
 include ':surgery-helper'
+include ':surgery-doctors'
 include ':surgery-doctor-arouter'
 include ':surgery-doctor-tryfinally'

@@ -1,4 +1,4 @@
-package osp.surger.doctor.tryfinally
+package osp.surgery.doctors.tryfinally
 
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Label
@@ -9,7 +9,6 @@ import osp.surgery.api.ClassVisitorDoctor
 import osp.surgery.api.FilterAction
 import osp.surgery.helper.*
 import java.io.File
-import java.lang.reflect.Modifier
 import java.util.*
 
 /**
@@ -27,17 +26,13 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
     }
 
     override fun filterByJar(jar: File): FilterAction {
+        if (jar.filterJar()) {
+            return FilterAction.noTransform
+        }
         return FilterAction.transformNow
     }
 
     override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar()) {
-            val name = className()
-            if (name.endsWith("TraceCompat") || name.endsWith("Trace")) {
-                "$tag >> ignore $name".sout()
-                return FilterAction.noTransform
-            }
-        }
         return FilterAction.transformNow
     }
 
@@ -55,7 +50,13 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
             it.substring(0.coerceAtLeast(it.length - 126))
         }
         mv.visitLdcInsn(tag)
-        mv.visitMethodInsn(org.objectweb.asm.Opcodes.INVOKESTATIC, "android/os/Trace", "beginSection", "(Ljava/lang/String;)V", false)
+        mv.visitMethodInsn(
+            org.objectweb.asm.Opcodes.INVOKESTATIC,
+            "android/os/Trace",
+            "beginSection",
+            "(Ljava/lang/String;)V",
+            false
+        )
     }
 
     open fun onMethodReturn(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter) {
@@ -69,23 +70,39 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
     }
 
     open fun onMethodExit(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter) {
-        mv.visitMethodInsn(org.objectweb.asm.Opcodes.INVOKESTATIC, "android/os/Trace", "endSection", "()V", false)
+        mv.visitMethodInsn(
+            org.objectweb.asm.Opcodes.INVOKESTATIC,
+            "android/os/Trace",
+            "endSection",
+            "()V",
+            false
+        )
     }
 
     inner class TryFinallyAdapter(classVisitor: ClassVisitor) : ClassVisitor(JAPI, classVisitor) {
 
         var className = ""
-        var isInterface = false
-
-        override fun visit(version: Int, access: Int, name: String?, signature: String?, superName: String?, interfaces: Array<out String>?) {
+        override fun visit(
+            version: Int,
+            access: Int,
+            name: String?,
+            signature: String?,
+            superName: String?,
+            interfaces: Array<out String>?
+        ) {
             super.visit(version, access, name, signature, superName, interfaces)
             className = name ?: "className"
-            isInterface = Modifier.isInterface(access)
         }
 
-        override fun visitMethod(access: Int, name: String?, descriptor: String?, signature: String?, exceptions: Array<out String>?): MethodVisitor {
+        override fun visitMethod(
+            access: Int,
+            name: String?,
+            descriptor: String?,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor {
             val visitMethod = super.visitMethod(access, name, descriptor, signature, exceptions)
-            if (isInterface || access.isMethodIgnore()) {
+            if (access.isMethodIgnore()) {
                 return visitMethod
             }
             val methodName = Objects.toString(name, "method_name")
@@ -123,7 +140,7 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
     }
 }
 
-interface TryFinally{
+interface TryFinally {
     fun methodEnter(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter)
     fun methodExit(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter)
 }

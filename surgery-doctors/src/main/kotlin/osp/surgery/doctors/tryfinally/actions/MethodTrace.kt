@@ -1,9 +1,9 @@
-package osp.surger.doctor.tryfinally.actions
+package osp.surgery.doctors.tryfinally.actions
 
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.commons.AdviceAdapter
-import osp.surger.doctor.tryfinally.TryFinally
+import osp.surgery.doctors.tryfinally.TryFinally
 
 /**
  * @author yun.
@@ -13,12 +13,24 @@ import osp.surger.doctor.tryfinally.TryFinally
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 class MethodTrace : TryFinally {
-    override fun methodEnter(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter) {
+    override fun methodEnter(
+        className: String,
+        methodName: String,
+        mv: MethodVisitor,
+        adapter: AdviceAdapter
+    ) {
         val tag = "$className -> $methodName".let {
+//            println(it)
             it.substring(0.coerceAtLeast(it.length - 126))
         }
         mv.visitLdcInsn(tag)
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "android/os/Trace", "beginSection", "(Ljava/lang/String;)V", false)
+        mv.visitMethodInsn(
+            Opcodes.INVOKESTATIC,
+            "android/os/Trace",
+            "beginSection",
+            "(Ljava/lang/String;)V",
+            false
+        )
     }
 
     override fun methodExit(className: String, methodName: String, mv: MethodVisitor, adapter: AdviceAdapter) {

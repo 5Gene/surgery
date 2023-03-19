@@ -1,4 +1,4 @@
-package osp.surger.doctor.tryfinally
+package osp.surgery.doctors.tryfinally
 
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor

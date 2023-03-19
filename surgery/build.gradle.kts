@@ -1,5 +1,5 @@
 
-val kotlin_version = "1.7.10"
+val kotlin_version = "1.8.10"
 
 plugins {
     id("java-gradle-plugin")
@@ -8,13 +8,11 @@ plugins {
 }
 
 project.ext {
-    set("GROUP_ID", "ospl.sparkj.plugin")
+    set("GROUP_ID", "osp.sparkj.plugin")
     set("ARTIFACT_ID", "surgery")
-    set("VERSION", "1.0.5")
+    set("VERSION", "2023.03.19")
 }
-//apply {
-//    from("../publish.gradle.kts")
-//}
+
 //apply("../publish.gradle.kts")
 apply("../publish-plugin.gradle")
 
@@ -25,13 +23,10 @@ dependencies{
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
     implementation("com.google.auto.service:auto-service-annotations:1.0.1")
 
-    api("commons-io:commons-io:2.10.0")
-    implementation("org.ow2.asm:asm:9.3")
-    implementation("org.ow2.asm:asm-commons:9.3")
-    implementation("org.ow2.asm:asm-tree:9.3")
+    api("osp.sparkj.plugin:surgery-api:2023.03.19")
 
-    compileOnly("com.android.tools.build:gradle:7.2.2")
-    compileOnly("com.android.tools.build:gradle-api:7.2.2")
+    compileOnly("com.android.tools.build:gradle:7.4.2")
+    compileOnly("com.android.tools.build:gradle-api:7.4.2")
     compileOnly(gradleApi())
     compileOnly(kotlin("gradle-plugin", kotlin_version))
     compileOnly(kotlin("gradle-plugin-api", kotlin_version))
@@ -42,14 +37,12 @@ gradlePlugin {
     plugins {
         create("surgery") {
             id = "surgery"
-            implementationClass = "ospl.surgery.plugin.Hospital"
+            implementationClass = "osp.surgery.plugin.Hospital"
             displayName = "${id}.gradle.plugin"
             description = project.description ?: project.name
         }
     }
 }
-
-
 
 //https://github.com/tschuchortdev/kotlin-compile-testing
 //https://bnorm.medium.com/exploring-kotlin-ir-bed8df167c23

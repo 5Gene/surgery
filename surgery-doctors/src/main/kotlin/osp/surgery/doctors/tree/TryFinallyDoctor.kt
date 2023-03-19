@@ -1,15 +1,22 @@
-package osp.surger.doctor.tryfinally
+package osp.surgery.doctors.tree
 
 import com.google.auto.service.AutoService
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.AdviceAdapter
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
-import osp.surger.doctor.tryfinally.actions.MethodTimeLog
-import osp.surger.doctor.tryfinally.actions.MethodTrace
 import osp.surgery.api.ClassTreeDoctor
 import osp.surgery.api.FilterAction
-import osp.surgery.helper.*
+import osp.surgery.doctors.tryfinally.MethodProcess
+import osp.surgery.doctors.tryfinally.TryFinalMethodAdapter
+import osp.surgery.doctors.tryfinally.TryFinally
+import osp.surgery.doctors.tryfinally.actions.MethodTimeLog
+import osp.surgery.doctors.tryfinally.actions.MethodTrace
+import osp.surgery.helper.JAPI
+import osp.surgery.helper.isJar
+import osp.surgery.helper.isMethodIgnore
+import osp.surgery.helper.sout
 import java.io.File
 
 @AutoService(ClassTreeDoctor::class)
@@ -53,8 +60,8 @@ open class TryFinallyDoctor : ClassTreeDoctor(), MethodProcess {
     override fun surgery(classNode: ClassNode): ClassNode {
         classNode.methods.replaceAll { method ->
             try {
-                if (method.isMethodIgnore() || method.instructions == null) {
-                    "$tag > skip method [Abstract] ${method.access} ${method.name}".sout()
+                if (method.isMethodIgnore() || method.instructions == null || !(method.instructions.any { it is MethodInsnNode })) {
+                    "$tag > skip method ${method.name}".sout()
                     method
                 } else {
                     val newMethod = MethodNode(
