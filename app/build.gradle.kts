@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("kapt")
-//    id("surgery")
+    id("surgery")
 }
 // ./gradlew transformDebugClassesWithAsm
 //apply<ExamplePlugin>()
@@ -45,9 +45,6 @@ android {
 }
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies {
-
-    implementation("osp.sparkj.plugin:surgery:2023.03.19")
-
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.8.0")
