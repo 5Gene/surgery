@@ -1,4 +1,4 @@
-val kotlin_version = "1.6.21"
+val kotlin_version = "1.8.11"
 //https://developer.android.google.cn/studio/intro/studio-config?hl=zh-cn
 plugins {
     id("com.android.application")
@@ -10,12 +10,12 @@ plugins {
 //apply<ExamplePlugin>()
 
 android {
-    compileSdkVersion(BuildConfig.compileSdkVersion)
+    compileSdk = BuildConfig.compileSdkVersion
 
     defaultConfig {
         applicationId = "spark.surgery"
-        minSdkVersion(BuildConfig.minSdkVersion)
-        targetSdkVersion(BuildConfig.targetSdkVersion)
+        minSdk = BuildConfig.minSdkVersion
+        targetSdk = BuildConfig.targetSdkVersion
         versionCode = 1
         versionName = "1.0"
 
@@ -45,12 +45,12 @@ android {
 }
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
-    implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
+    implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
     implementation("com.alibaba:arouter-api:1.5.2")
     kapt("com.alibaba:arouter-compiler:1.5.2")
 }

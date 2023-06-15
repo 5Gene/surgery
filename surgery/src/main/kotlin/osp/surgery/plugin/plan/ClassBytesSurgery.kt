@@ -212,7 +212,13 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                 }
             }
             or.await()
-            sp.save(gson.toJson(distincted))
+            "======================================".sout()
+            "$distincted".sout()
+            try {
+                sp.save(gson.toJson(distincted))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
         doctors.forEach {
             it.surgeryOver()

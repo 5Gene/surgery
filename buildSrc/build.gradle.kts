@@ -34,6 +34,7 @@ dependencies {
 
 //https://github.com/tschuchortdev/kotlin-compile-testing
 //https://bnorm.medium.com/exploring-kotlin-ir-bed8df167c23
+//https://github.com/Leifzhang/GradleSample.git
 
 //完成以下功能
 //https://github.com/zhuguohui/MehodInterceptor
