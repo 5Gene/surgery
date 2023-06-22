@@ -2,8 +2,8 @@
 
 buildscript {
     dependencies {
-        classpath "osp.sparkj.plugin:surgery:2023.06.15"
-        classpath "osp.sparkj.plugin:surgery-doctors:2023.03.19"
+        classpath "osp.sparkj.plugin:surgery:2023.06.17"
+        classpath "osp.sparkj.plugin:surgery-doctor-tryfinally:2023.06.22"
     }
 }
 

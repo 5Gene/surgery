@@ -93,7 +93,11 @@ fun isNormalClick(methodName: String, descriptor: String) = "onClick" == methodN
 
 
 fun MethodNode.isMethodIgnore(): Boolean {
-    return Modifier.isAbstract(access)
+    return isEmptyBody() || access.isMethodIgnore()
+}
+
+fun MethodNode.isEmptyBody(): Boolean {
+    return instructions == null || instructions.size() == 0
 }
 
 fun Int.isReturn(): Boolean {
@@ -105,5 +109,5 @@ fun Int.isMethodInvoke(): Boolean {
 }
 
 fun Int.isMethodIgnore(): Boolean {
-    return Modifier.isAbstract(this) || Modifier.isNative(this)
+    return Modifier.isAbstract(this) || Modifier.isNative(this) || Modifier.isInterface(this)
 }

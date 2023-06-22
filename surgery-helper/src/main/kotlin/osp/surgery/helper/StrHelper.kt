@@ -10,7 +10,7 @@ package osp.surgery.helper
 
 
 fun String.log() {
-    println(" $ sparkj > $this")
+    println("${Thread.currentThread().id} $ sparkj > $this")
 }
 
 fun String.isModuleJar(): Boolean {
@@ -54,5 +54,5 @@ fun String.isJar(): Boolean {
 }
 
 fun Any.sout() {
-    println(" $ sparkj > $this")
+    println("${Thread.currentThread().id} $ sparkj > $this")
 }

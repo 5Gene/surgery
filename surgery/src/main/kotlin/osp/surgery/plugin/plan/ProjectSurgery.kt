@@ -85,6 +85,7 @@ class ProjectSurgeryImpl : ProjectSurgery {
             val nowGroup =
                 grouped[FilterAction.transformNow] ?: (emptyList<ClassBytesSurgery>() + nowLastGroup)
             if (nowGroup.isNotEmpty()) {
+                " # ${this.javaClass.simpleName} ==== surgeryOnFile > class: ${srcFile.name}".sout()
                 //只要有现在执行的就执行 以后执行的他内部自己会在以后处理
                 srcFile.review(destFile) { bytes ->
                     nowGroup.fold(bytes) { acc, more ->
@@ -92,6 +93,7 @@ class ProjectSurgeryImpl : ProjectSurgery {
                     }
                 }
             } else {
+                " # ${this.javaClass.simpleName} ==== surgeryOnFile no transform > class: ${srcFile.name}".sout()
                 //如果现在要处理的为空 未来处理的不为空那么未来会处理 但是先要复制源文件到dest
                 FileUtils.touch(destFile)
                 FileUtils.copyFile(srcFile, destFile)
@@ -112,6 +114,7 @@ class ProjectSurgeryImpl : ProjectSurgery {
 
             if (srcJarFile.skipJar()) {
                 " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar: ${srcJarFile.name} ==== ".sout()
+                " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar: ${destJarFile.path} ==== ".sout()
                 FileUtils.touch(destJarFile)
                 FileUtils.copyFile(srcJarFile, destJarFile)
                 return@submit
@@ -125,10 +128,12 @@ class ProjectSurgeryImpl : ProjectSurgery {
             val lastGroup = grouped[FilterAction.transformLast] ?: emptyList<ClassBytesSurgery>()
 
             if (nowGroup.isEmpty() && lastGroup.isEmpty()) {
+                " # ${this.javaClass.simpleName} ==== surgeryOnJar no transform > ${srcJarFile.name} ==== ".sout()
                 //都不处理就直接复制jar
                 FileUtils.touch(destJarFile)
                 FileUtils.copyFile(srcJarFile, destJarFile)
             } else {
+                " # ${this.javaClass.simpleName} ==== surgeryOnJar > ${srcJarFile.name} ==== ".sout()
                 JarFile(srcJarFile).review(destJarFile) { jarEntry, bytes ->
                     classSurgeries.filter { more ->
                         val action =

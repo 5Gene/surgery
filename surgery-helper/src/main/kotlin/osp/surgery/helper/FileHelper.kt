@@ -90,10 +90,12 @@ fun File.touch(): File {
 }
 
 inline fun File.repair(repair: (ByteArray) -> ByteArray) {
+    "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 repair File \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
     val destFile = File("$absolutePath.temp")
     review(destFile, repair)
     delete()
     FileUtils.moveFile(destFile, this)
+    "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 repair File \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
 }
 
 //处理class文件 从srcFile复制到destFile ，review这个过程，中间对byteArray做一次处理
@@ -112,10 +114,12 @@ inline fun File.review(destFile: File, wizard: (ByteArray) -> ByteArray) {
 
 inline fun File.repairJar(repair: (srcJarEntry: JarEntry, bytes: ByteArray) -> ByteArray) {
     //jarfile需要close
+    "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 repair Jar \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
     val destFile = File("$absolutePath.temp")
     JarFile(this).review(destFile, repair)
     delete()
     FileUtils.moveFile(destFile, this)
+    "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 repair Jar \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
 }
 
 /**

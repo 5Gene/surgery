@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 data class LastFile<DOCTOR>(
-    val dest: File,
+    val destPath: String,
     val doctors: MutableMap<String, MutableSet<DOCTOR>>,
     val jar: Boolean = false
 )
@@ -49,7 +49,7 @@ interface ClassBytesSurgery {
 
 abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     val tag = this.javaClass.simpleName
-    private val lastProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
+    private val finalProcessedFiles = CopyOnWriteArrayList<LastFile<DOCTOR>>()
     private val localLastFile = ThreadLocal<LastFile<DOCTOR>>()
     private val chiefDoctors = ThreadLocal<List<DOCTOR>>()
     private val currentFile = ThreadLocal<File>()
@@ -72,7 +72,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         val cache = sp.read()
         if (cache.isNotEmpty()) {
             val array = JsonParser.parseString(cache).asJsonArray
-            lastProcessedFiles.addAll(array.map {
+            finalProcessedFiles.addAll(array.map {
                 val jsonobj = it.asJsonObject
                 val path = jsonobj.get("dest").asJsonObject.get("path").asString
                 val doctorsObj = jsonobj.get("doctors").asJsonObject
@@ -84,10 +84,10 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                         doctorsMap[className]!!
                     }.toMutableSet()
                 }.toMutableMap()
-                LastFile(File(path), map, jar = path.isJar())
+                LastFile(path, map, jar = path.isJar())
             }.toList())
             " # $tag >>> =============== cache ================== <<< ".sout()
-            " # $tag >>> ${gson.toJson(lastProcessedFiles)} <<< ".sout()
+            " # $tag >>> ${gson.toJson(finalProcessedFiles)} <<< ".sout()
             " # $tag >>> =============== cache ================== <<< ".sout()
         }
         return doctorsMap.values
@@ -104,6 +104,9 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     }
 
     override fun filterByJar(jar: File): FilterAction {
+        if (doctors.isEmpty()) {
+            return FilterAction.noTransform
+        }
         val grouped = doctors.groupBy {
             it.filterByJar(jar)
         }
@@ -126,6 +129,9 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         status: Status,
         className: () -> String
     ): FilterAction {
+        if (doctors.isEmpty()) {
+            return FilterAction.noTransform
+        }
         var result = FilterAction.noTransform
         if (isJar) {
             val grouped = doctors.groupBy {
@@ -176,10 +182,10 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         fileName: String,
         lastGroup: List<DOCTOR>
     ) {
-        val lastFile = lastProcessedFiles.find {
-            it.dest.path == dest.path
-        } ?: LastFile(dest, mutableMapOf(fileName to mutableSetOf<DOCTOR>()), jar = dest.isJar()).apply {
-            lastProcessedFiles.add(this)
+        val lastFile = finalProcessedFiles.find {
+            it.destPath == dest.path
+        } ?: LastFile(dest.path, mutableMapOf(fileName to mutableSetOf<DOCTOR>()), jar = dest.isJar()).apply {
+            finalProcessedFiles.add(this)
         }
         if (lastFile.doctors[fileName] == null) {
             lastFile.doctors[fileName] = lastGroup.toMutableSet()
@@ -199,11 +205,13 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     abstract fun doSurgery(doctors: List<DOCTOR>, classFileByte: ByteArray): ByteArray
 
     override fun surgeryOver() {
-        if (lastProcessedFiles.isNotEmpty()) {
-            val distincted = lastProcessedFiles.distinctBy {
-                it.dest.path
+        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $this surgeryOver \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+        if (finalProcessedFiles.isNotEmpty()) {
+            val distincted = finalProcessedFiles.distinctBy {
+                it.destPath
             }
             distincted.forEach { lastFile ->
+                "finalProcessedFile >> $lastFile".sout()
                 or.submit {
                     when {
                         lastFile.jar -> repairJar(lastFile)
@@ -212,8 +220,6 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                 }
             }
             or.await()
-            "======================================".sout()
-            "$distincted".sout()
             try {
                 sp.save(gson.toJson(distincted))
             } catch (e: Exception) {
@@ -223,28 +229,34 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         doctors.forEach {
             it.surgeryOver()
         }
+        "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $this surgeryOver \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
     }
 
     private fun repairJar(lastFile: LastFile<DOCTOR>) {
-        " # $tag >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
-        " # $tag >>> fire: ${lastFile.dest}".sout()
+        " # $tag \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 final repairJar file \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+        " # $tag >>> fire: ${lastFile.destPath}".sout()
         " # $tag >>> doctors: ${lastFile.doctors}".sout()
-        " # $tag >>>>>>>>>>>>>>>>>>>>>>>>>> last repairJar file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<".sout()
-        lastFile.dest.repairJar { jarEntry, bytes ->
-            chiefDoctors.set(lastFile.doctors[jarEntry.name]?.toList())
-            surgery(bytes)
+        File(lastFile.destPath).repairJar { jarEntry, bytes ->
+            lastFile.doctors[jarEntry.name]?.toList()?.let {
+                chiefDoctors.set(it)
+                surgery(bytes)
+            } ?: run {
+                chiefDoctors.remove()
+                bytes
+            }
         }
+        " # $tag \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 final repairJar file \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
     }
 
     private fun repairFile(lastFile: LastFile<DOCTOR>) {
-        " # $tag >>> last repairFile file <<< ==================================================".sout()
-        " # $tag >>> fire: ${lastFile.dest}".sout()
+        " # $tag \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 final repairFile file \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+        " # $tag >>> fire: ${lastFile.destPath}".sout()
         " # $tag >>> doctors: ${lastFile.doctors}".sout()
-        " # $tag >>> last repairFile file <<< ==================================================".sout()
         chiefDoctors.set(lastFile.doctors.values.flatten().toList())
-        lastFile.dest.repair { bytes ->
+        File(lastFile.destPath).repair { bytes ->
             surgery(bytes)
         }
+        " # $tag \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 final repairFile file \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
     }
 }
 
@@ -252,6 +264,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
 class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
+        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $tag : loadDoctors \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         val supers = mutableListOf<String>()
         return ServiceLoader.load(ClassTreeDoctor::class.java).iterator().asSequence()
@@ -262,11 +275,13 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
             }.map {
                 " # $tag === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
                 it.className to it
-            }.toMap().toMutableMap()
+            }.toMap().toMutableMap().also {
+                "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $tag : loadDoctors \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
+            }
     }
 
     override fun doSurgery(doctors: List<ClassTreeDoctor>, classFileByte: ByteArray): ByteArray {
-        if (doctors.isNullOrEmpty()) {
+        if (doctors.isEmpty()) {
             return classFileByte
         }
 //        ClassWriter.COMPUTE_MAXS
@@ -306,9 +321,14 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 @AutoService(ClassBytesSurgery::class)
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
+        val classVisitorDoctors = ServiceLoader.load(ClassVisitorDoctor::class.java)
+        if (!classVisitorDoctors.iterator().hasNext()) {
+            return mutableMapOf<String, ClassVisitorDoctor>()
+        }
+        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $tag : loadDoctors \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         val supers = mutableListOf<String>()
-        return ServiceLoader.load(ClassVisitorDoctor::class.java).iterator().asSequence()
+        return classVisitorDoctors.iterator().asSequence()
             .onEach {
                 supers.add(it.javaClass.superclass.name)
             }.filter {
@@ -316,11 +336,13 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
             }.map {
                 " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
                 it.className to it
-            }.toMap().toMutableMap()
+            }.toMap().toMutableMap().also {
+                "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $tag : loadDoctors \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
+            }
     }
 
     override fun doSurgery(doctors: List<ClassVisitorDoctor>, classFileByte: ByteArray): ByteArray {
-        if (doctors.isNullOrEmpty()) {
+        if (doctors.isEmpty()) {
             return classFileByte
         }
 //        ClassWriter.COMPUTE_MAXS

@@ -58,6 +58,7 @@ class JSP(val name: String) {
         try {
             return file.readText()
         } catch (e: Exception) {
+            e.printStackTrace()
            return ""
         }
     }
@@ -66,6 +67,7 @@ class JSP(val name: String) {
         try {
             file.writeText(key)
         } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
