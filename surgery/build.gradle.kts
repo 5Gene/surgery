@@ -42,6 +42,7 @@ version = project.ext["VERSION"]!!
 group = project.ext["GROUP_ID"]!!
 //</editor-fold>
 
+//https://docs.gradle.org/current/userguide/publishing_gradle_plugins.html
 //https://plugins.gradle.org/docs/publish-plugin
 //定义插件  就不需要 resources/META-INF/gradle-plugins/*.properties文件了
 gradlePlugin {
