@@ -1,10 +1,14 @@
-
 val kotlin_version = "1.8.10"
 
 plugins {
-    id("java-gradle-plugin")
     id("com.google.devtools.ksp")
     kotlin("jvm")
+    `maven-publish`
+    `java-gradle-plugin`
+    // Apply the Plugin Publish plugin to make plugin publication possible
+    // The Plugin Publish plugin will in turn auto-apply the Gradle Plugin Development Plugin (java-gradle-plugin)
+    // and the Maven Publish plugin (maven-publish)
+    id("com.gradle.plugin-publish") version "1.2.0"
 }
 
 project.ext {
@@ -32,14 +36,27 @@ dependencies{
     compileOnly(kotlin("gradle-plugin-api", kotlin_version))
 }
 
+
+//<editor-fold desc="for plugin-publish">
+version = project.ext["VERSION"]!!
+group = project.ext["GROUP_ID"]!!
+//</editor-fold>
+
+//https://plugins.gradle.org/docs/publish-plugin
 //定义插件  就不需要 resources/META-INF/gradle-plugins/*.properties文件了
 gradlePlugin {
+//    0.18.0 版本 plugin-publish 不需要 website 对应gradle 7.4.2
+//  1.0.0版本 plugin-publish开始 必须要website 必须对应gradle 7.4.6+版本
+    website.set("https://github.com/5hmlA/surgery")
+    vcsUrl.set("https://github.com/5hmlA/surgery")
+
     plugins {
         create("surgery") {
-            id = "surgery"
+            id = "osp.sparkj.surgery"
             implementationClass = "osp.surgery.plugin.Hospital"
             displayName = "${id}.gradle.plugin"
             description = project.description ?: project.name
+            tags.set(listOf("asm", "transform", "spark", "plugins"))
         }
     }
 }
