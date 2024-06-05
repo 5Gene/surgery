@@ -9,10 +9,13 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import osp.surgery.helper.sout
+import osp.surgery.plugin.plan.ProjectSurgeryImpl
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -35,12 +38,17 @@ abstract class SurgeryTask : DefaultTask() {
     @Internal
     val jarPaths = mutableSetOf<String>()
 
+    @Internal
+    private val surgery = ProjectSurgeryImpl()
+
     @get:Internal
     abstract var tag: String
 
     @TaskAction
     fun taskAction() {
         println("$tag ===============================================================================")
+        val nanoStartTime = System.nanoTime()
+        surgery.surgeryPrepare()
         //xxxx/classes.jar 必须写入这个jar,后续只会处理这个jar
         val outputFile = output.get().asFile
         val allInputJars = allJars.get()
@@ -59,8 +67,11 @@ abstract class SurgeryTask : DefaultTask() {
                 val cost = measureTimeMillis {
                     val entries = jarFile.entries()
                     entries.asSequence().forEachIndexed { index, jarEntry ->
-//                    entries.iterator().forEach { jarEntry ->
-//                    println("$tag Adding from jar ${jarEntry.name}")
+                        if (jarEntry.isDirectory) {
+                            println("xxx ${jarEntry.name}")
+                            return@forEachIndexed
+                        }
+                        println("-- ${jarEntry.name}")
                         jarOutput.writeEntity(jarEntry.name, jarFile.getInputStream(jarEntry))
                     }
                 }
@@ -84,8 +95,8 @@ abstract class SurgeryTask : DefaultTask() {
                             } else {
                                 // if class is not SomeSource.class - just copy it to output without modification
                                 val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
-//                            println("$tag Adding from directory ${relativePath.replace(File.separatorChar, '/')}")
                                 jarOutput.writeEntity(relativePath.replace(File.separatorChar, '/'), file.inputStream())
+                                println("$tag Adding from dir $relativePath")
                             }
                         }
                     }
@@ -96,6 +107,11 @@ abstract class SurgeryTask : DefaultTask() {
         println("$tag > dir handling cost:$dirCost")
 
         jarOutput.close()
+
+        surgery.surgeryOver()
+        val cost = System.nanoTime() - nanoStartTime
+        " # ${this.javaClass.simpleName} == cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}".sout()
+        Dean.context.release()
         println("$tag ===============================================================================")
     }
 
@@ -103,7 +119,7 @@ abstract class SurgeryTask : DefaultTask() {
     // writeEntity methods check if the file has name that already exists in output jar
     private fun JarOutputStream.writeEntity(name: String, inputStream: InputStream) {
         // check for duplication name first
-        if (jarPaths.contains(name)) {
+        if (name.endsWith("/") || jarPaths.contains(name)) {
             printDuplicatedMessage(name)
         } else {
             putNextEntry(JarEntry(name))
@@ -127,4 +143,23 @@ abstract class SurgeryTask : DefaultTask() {
 
     private fun printDuplicatedMessage(name: String) =
         println("Cannot add ${name}, because output Jar already has file with the same name.")
+
+
+    private fun reviewJarFile(
+        it: TransformInput,
+        transformInvocation: TransformInvocation
+    ) {
+        " # ${this.javaClass.simpleName} ***** surgeryOnJar: ${jar.file.name}".sout()
+        surgery.surgeryOnJar(jar.file, destJarFile)
+    }
+
+    private fun reviewDirectory(
+        it: TransformInput,
+        transformInvocation: TransformInvocation
+    ) {
+        " # ${this.javaClass.simpleName} ***** surgeryOnDirectory: ${srcDirectory.name}".sout()
+        srcDirectory.walk().filter { it.isFile }.forEach {
+            surgery.surgeryOnFile(it, srcDirectory, destDirectory)
+        }
+    }
 }

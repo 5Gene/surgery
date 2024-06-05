@@ -39,7 +39,6 @@ interface ClassBytesSurgery {
         dest: File,
         isJar: Boolean,
         fileName: String,
-        status: Status,
         className: () -> String
     ): FilterAction
 
@@ -123,10 +122,8 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
      */
     override fun filterByClassName(
         src: File,
-        dest: File,
         isJar: Boolean,
         fileName: String,
-        status: Status,
         className: () -> String
     ): FilterAction {
         if (doctors.isEmpty()) {
@@ -144,7 +141,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
             }
             if (!lastGroup.isNullOrEmpty()) {
                 "$tag > lastGroup : ${lastGroup.size} > $lastGroup".sout()
-                collectLastWorker(dest, fileName, lastGroup)
+                collectLastWorker(src, fileName, lastGroup)
                 result = FilterAction.transformLast
             }
             if (nowGroup.isNullOrEmpty()) {
@@ -165,7 +162,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
                 //只要有未来要处理的就不执行 以后在执行  以后执行的时候要把现在执行的也执行
                 val lastWorkers = if (nowGroup.isNullOrEmpty()) lastGroup else nowGroup + lastGroup
                 "$tag > lastWorkers > $lastWorkers".sout()
-                collectLastWorker(dest, fileName, lastWorkers)
+                collectLastWorker(src, fileName, lastWorkers)
                 return FilterAction.noTransform
             }
             if (nowGroup.isNullOrEmpty()) {

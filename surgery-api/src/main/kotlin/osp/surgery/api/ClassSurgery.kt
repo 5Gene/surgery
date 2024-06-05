@@ -12,32 +12,10 @@ import java.util.*
  */
 inline fun <reified T> Any?.safeAs(): T? = this as? T
 
-enum class Status {
-    /**
-     * The file was not changed since the last build.
-     */
-    NOTCHANGED,
-
-    /**
-     * The file was added since the last build.
-     */
-    ADDED,
-
-    /**
-     * The file was modified since the last build.
-     */
-    CHANGED,
-
-    /**
-     * The file was removed since the last build.
-     */
-    REMOVED
-}
-
 interface ClassBytesSurgery {
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
-    fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, status: Status, className: () -> String): FilterAction
+    fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, className: () -> String): FilterAction
     fun surgery(classFileByte: ByteArray): ByteArray
     fun surgeryOver()
 }

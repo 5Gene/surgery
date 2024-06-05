@@ -24,12 +24,12 @@ interface ProjectSurgery {
     //过滤文件
     // 1 现在处理 --> transform
     // 2 以后处理 --> 收集起来
-    fun surgeryOnFile(srcFile: File, srcDirectory: File, destDirectory: File, status: osp.surgery.api.Status)
+    fun surgeryOnFile(srcFile: File, srcDirectory: File, destDirectory: File)
 
     //过滤文件
     // 1 现在处理 --> 扫描jar-> transform
     // 2 以后处理 --> 扫描jar-> 收集起来
-    fun surgeryOnJar(srcJarFile: File, destJarFile: File, status: osp.surgery.api.Status)
+    fun surgeryOnJar(srcJarFile: File, destJarFile: File)
 
     fun surgeryOver()
 }
@@ -57,15 +57,8 @@ class ProjectSurgeryImpl : ProjectSurgery {
         srcFile: File,
         srcDirectory: File,
         destDirectory: File,
-        status: osp.surgery.api.Status
     ) {
         scheduler.submit {
-            if (status == osp.surgery.api.Status.NOTCHANGED) {
-                " # ${this.javaClass.simpleName} ==== surgeryOnFile > NOTCHANGED class: ${srcFile.name}".sout()
-                // 文件没变化
-                // 如果是最后处理的文件 需要当做有变化处理，因为最后处理的文件都是遍历过其他文件之后对最后处理的文件进行修改
-                return@submit
-            }
             val destFilePath =
                 srcFile.absolutePath.replace(srcDirectory.absolutePath, destDirectory.absolutePath)
             val destFile = File(destFilePath)
@@ -77,7 +70,7 @@ class ProjectSurgeryImpl : ProjectSurgery {
             }
             //如果都不处理就直接复制文件就行了
             val grouped = classSurgeries.groupBy {
-                it.filterByClassName(srcFile, destFile, false, srcFile.name, status) {
+                it.filterByClassName(srcFile, destFile, false, srcFile.name) {
                     srcFile.className(srcDirectory)
                 }
             }
@@ -101,17 +94,12 @@ class ProjectSurgeryImpl : ProjectSurgery {
         }
     }
 
-    override fun surgeryOnJar(srcJarFile: File, destJarFile: File, status: osp.surgery.api.Status) {
+    override fun surgeryOnJar(srcJarFile: File) {
         //处理jar的时候
         // 对于jar里面的class
         // 可能有部分classMore要处理部分不处理部分以后处理  而且只有在遍历的时候才知道
         // 所以当classMore内部有要现在处理和以后处理的情况的时候 就遍历让现在处理的去处理
         scheduler.submit {
-            if (status == osp.surgery.api.Status.NOTCHANGED) {
-                " # ${this.javaClass.simpleName} ==== surgeryOnJar > NOTCHANGED jar: ${srcJarFile.name}".sout()
-                return@submit
-            }
-
             if (srcJarFile.skipJar()) {
                 " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar: ${srcJarFile.name} ==== ".sout()
                 " # ${this.javaClass.simpleName} ==== surgeryOnJar skip jar: ${destJarFile.path} ==== ".sout()
@@ -137,7 +125,7 @@ class ProjectSurgeryImpl : ProjectSurgery {
                 JarFile(srcJarFile).review(destJarFile) { jarEntry, bytes ->
                     classSurgeries.filter { more ->
                         val action =
-                            more.filterByClassName(srcJarFile, destJarFile, true, jarEntry.name, status) {
+                            more.filterByClassName(srcJarFile, destJarFile, true, jarEntry.name) {
                                 jarEntry.name.className()
                             }
                         //以后处理的限制也得复制到dest因为以后处理的时候是直接处理dest
