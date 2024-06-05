@@ -32,9 +32,9 @@ open class Argument(val project: Project) {
         println("message = $message")
         println("sender = $sender")
         println("innerExt = $innerExt")
-        buildTypes.all {
-            println("===> ${it.name}")
-        }
+//        buildTypes.all {
+//            println("===> ${it.name}")
+//        }
         buildTypes.forEach {
             println(it.name)
         }

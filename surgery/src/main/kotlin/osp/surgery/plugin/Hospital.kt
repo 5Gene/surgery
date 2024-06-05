@@ -1,7 +1,12 @@
 package osp.surgery.plugin
 
+import com.android.build.api.artifact.ScopedArtifact
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.ScopedArtifacts
+import com.android.build.gradle.AppPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.register
 import osp.surgery.helper.sout
 import java.util.*
 
@@ -15,7 +20,29 @@ import java.util.*
 
 class Hospital : Plugin<Project> {
     override fun apply(project: Project) {
-//        project.extensions.create("spark", com.spark.extension.Spark::class.java)
+        project.plugins.withType(AppPlugin::class.java) {
+
+            // Queries for the extension set by the Android Application plugin.
+            // This is the second of two entry points into the Android Gradle plugin
+            val androidComponents =
+                project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+            // Registers a callback to be called, when a new variant is configured
+            androidComponents.onVariants { variant ->
+                val taskProvider = project.tasks.register<SurgeryTask>("Surgery${variant.name}Classes") {
+                    tag = "1"
+                }
+
+                // Register modify classes task
+                variant.artifacts.forScope(ScopedArtifacts.Scope.ALL)
+                    .use(taskProvider)
+                    .toTransform(
+                        ScopedArtifact.CLASSES,
+                        SurgeryTask::allJars,
+                        SurgeryTask::allDirectories,
+                        SurgeryTask::output
+                    )
+            }
+        }
         val taskReauests = project.gradle.startParameter.taskRequests
         " taskReauests : $taskReauests ".sout()
         if (taskReauests.size > 0) {
@@ -29,10 +56,10 @@ class Hospital : Plugin<Project> {
 
 //                val android = project.extensions.findByType<com.android.build.gradle.BaseExtension>()
 //                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
-                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
-                println(project.extensions.findByName("android"))
-                "project name: ${project.name}  $android  ${android?.transforms}".sout()
-                android?.registerTransform(Surgery(project))
+//                val android = project.extensions.findByType(ApplicationAndroidComponentsExtension::class.java)
+//                println(project.extensions.findByName("android"))
+//                "project name: ${project.name}  $android  ${android?.transforms}".sout()
+//                android?.registerTransform(Surgery(project))
             }
         }
     }

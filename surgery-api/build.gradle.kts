@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm")
+    kotlin("jvm")
 }
 
 project.ext {
@@ -7,7 +7,6 @@ project.ext {
     set("ARTIFACT_ID", "surgery-api")
     set("VERSION", "2023.06.22")
 }
-apply("../publish-plugin.gradle")
 
 dependencies{
 //    implementation("org.ow2.asm:asm:9.3")

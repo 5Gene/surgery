@@ -8,7 +8,7 @@ pluginManagement {
             credentials {
                 // https://www.sojson.com/ascii.html
                 username = '''\u005a\u0075\u0059\u0075\u006e'''
-                password = '''\u0067\u0068\u0070\u005f\u0031\u0063\u0062\u0064\u004d\u004a\u0073\u005a\u0042\u0057\u0033\u006a\u0077\u0057\u0053\u004b\u006e\u0066\u0037\u0042\u0053\u0069\u0044\u006d\u0061\u0030\u0066\u0044\u0048\u0076\u0031\u007a\u0059\u0050\u0073\u0044'''
+                password = """\u0067\u0068\u0070\u005f\u004f\u0043\u0042\u0045\u007a\u006a\u0052\u0069\u006e\u0043\u0065\u0048\u004c\u0068\u006b\u0052\u0036\u0056\u0061\u0041\u0074\u0068\u004f\u004a\u0059\u0042\u0047\u0044\u0073\u0049\u0032\u0070\u0064\u0064\u0069\u0066"""
             }
         }
         maven{
@@ -18,6 +18,11 @@ pluginManagement {
 }
 dependencyResolutionManagement {
 //    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    versionCatalogs {
+        create("wings") {
+            from(files("gradle/wings.versions.toml"))
+        }
+    }
     repositories {
         google()
         mavenCentral()
@@ -25,7 +30,7 @@ dependencyResolutionManagement {
             url = uri("https://maven.pkg.github.com/5hmlA/sparkj")
             credentials {
                 username = '''\u005a\u0075\u0059\u0075\u006e'''
-                password = '''\u0067\u0068\u0070\u005f\u0031\u0063\u0062\u0064\u004d\u004a\u0073\u005a\u0042\u0057\u0033\u006a\u0077\u0057\u0053\u004b\u006e\u0066\u0037\u0042\u0053\u0069\u0044\u006d\u0061\u0030\u0066\u0044\u0048\u0076\u0031\u007a\u0059\u0050\u0073\u0044'''
+                password = """\u0067\u0068\u0070\u005f\u004f\u0043\u0042\u0045\u007a\u006a\u0052\u0069\u006e\u0043\u0065\u0048\u004c\u0068\u006b\u0052\u0036\u0056\u0061\u0041\u0074\u0068\u004f\u004a\u0059\u0042\u0047\u0044\u0073\u0049\u0032\u0070\u0064\u0064\u0069\u0066"""
             }
         }
         maven{
@@ -34,8 +39,8 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "surgery"
+includeBuild("surgery")
 include ':app'
-include ':surgery'
 include ':surgery-api'
 include ':surgery-helper'
 include ':surgery-doctors'

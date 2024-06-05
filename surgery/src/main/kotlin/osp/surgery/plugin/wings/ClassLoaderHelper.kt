@@ -1,7 +1,6 @@
 package osp.surgery.plugin.wings
 
 import com.android.build.api.transform.TransformInput
-import com.android.build.gradle.AppExtension
 import org.gradle.api.Project
 import org.jetbrains.kotlin.com.google.common.collect.ImmutableList
 import java.io.File
@@ -44,10 +43,11 @@ object ClassLoaderHelper {
      * /Users/quinn/Documents/Android/SDK/platforms/android-28/android.jar
      */
     private fun getAndroidJarPath(project: Project): String {
-        val appExtension = project.properties["android"] as AppExtension?
-        var sdkDirectory = appExtension!!.sdkDirectory.absolutePath
-        val compileSdkVersion = appExtension.compileSdkVersion!!
-        sdkDirectory = sdkDirectory + File.separator + "platforms" + File.separator
-        return sdkDirectory + compileSdkVersion + File.separator + "android.jar"
+//        val appExtension = project.properties["android"] as ApplicationExtension?
+//        var sdkDirectory = appExtension!!.sdkDirectory.absolutePath
+//        val compileSdkVersion = appExtension.compileSdkVersion!!
+//        sdkDirectory = sdkDirectory + File.separator + "platforms" + File.separator
+//        return sdkDirectory + compileSdkVersion + File.separator + "android.jar"
+        return ""
     }
 }

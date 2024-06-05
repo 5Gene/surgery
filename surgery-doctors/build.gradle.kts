@@ -8,7 +8,6 @@ project.ext {
     set("ARTIFACT_ID", "surgery-doctors")
     set("VERSION", "2023.03.19")
 }
-apply("../publish-plugin.gradle")
 
 dependencies{
     ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
