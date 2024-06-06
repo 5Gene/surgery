@@ -29,7 +29,7 @@ class Hospital : Plugin<Project> {
             // Registers a callback to be called, when a new variant is configured
             androidComponents.onVariants { variant ->
                 val taskProvider = project.tasks.register<SurgeryTask>("Surgery${variant.name}Classes") {
-                    tag = "1"
+                    tag = "🔥"
                 }
                 // Register modify classes task
                 variant.artifacts.forScope(ScopedArtifacts.Scope.ALL)
@@ -50,9 +50,7 @@ class Hospital : Plugin<Project> {
             if (args.isNotEmpty()) {
 //                val predicate: (String) -> Boolean = { it.toLowerCase().contains("release") }
 //                if (args.any(predicate)) {
-//
 //                }
-
 //                val android = project.extensions.findByType<com.android.build.gradle.BaseExtension>()
 //                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
 //                val android = project.extensions.findByType(ApplicationAndroidComponentsExtension::class.java)
