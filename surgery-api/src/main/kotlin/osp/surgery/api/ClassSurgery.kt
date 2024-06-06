@@ -15,7 +15,11 @@ inline fun <reified T> Any?.safeAs(): T? = this as? T
 interface ClassBytesSurgery {
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
-    fun filterByClassName(src: File, dest: File, isJar: Boolean, fileName: String, className: () -> String): FilterAction
-    fun surgery(classFileByte: ByteArray): ByteArray
+    fun filterByClassName(
+        fileName: String,
+        compileClassName: String,
+    ): FilterAction
+
+    fun surgery(fileName: String, classFileByte: ByteArray): ByteArray
     fun surgeryOver()
 }

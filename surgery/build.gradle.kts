@@ -3,7 +3,6 @@ plugins {
     id("java-gradle-plugin")
     alias(libs.plugins.ksp)
     `kotlin-dsl`
-//    kotlin("jvm")
 }
 
 //repositories {
@@ -23,14 +22,18 @@ dependencies{
 //    ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
     implementation("com.google.auto.service:auto-service-annotations:1.0.1")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation("osp.sparkj.plugin:surgery-api:2024.06.06")
 
-    api("osp.sparkj.plugin:surgery-api:2023.03.19")
+//    api("osp.sparkj.plugin:surgery-api:2023.03.19")
+//    implementation(project(":surgery-api"))
 
     compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(gradleKotlinDsl())
     compileOnly(gradleApi())
     compileOnly(kotlin("gradle-plugin", libs.versions.kotlin.get()))
     compileOnly(kotlin("gradle-plugin-api", libs.versions.kotlin.get()))
+
 }
 
 //定义插件  就不需要 resources/META-INF/gradle-plugins/*.properties文件了

@@ -18,7 +18,7 @@ import java.io.File
 
 const val loadRouterMap = "loadRouterMap"
 const val arouterFilePrefix = "ARouter$$"
-const val logisticsCenterClass = "LogisticsCenter"
+const val logisticsCenterClass = "LogisticsCenter.class"
 const val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
 const val JTAG = "surgery"
 
@@ -48,31 +48,17 @@ class ArouteDoctor : ClassTreeDoctor() {
         return FilterAction.noTransform
     }
 
-    override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar()) {
-            val name = className()
-            if (name.contains(arouterFilePrefix)) {
-                val router = className()
-                println(routesClassNames)
-                " # $tag .. keep $router  from  ${file.name}".sout()
-                if (routesClassNames.add(router)) {
-                    isIncrementalRoutesClassNames.add(router)
-                }
-                return FilterAction.noTransform
-            } else if (name.endsWith(logisticsCenterClass)) {
-                " # $tag >> fond LogisticsCenter [in] ${file.path}".sout()
-                return FilterAction.transformLast
+    override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
+        if (fileName.startsWith(arouterFilePrefix)) {
+            val router = compileClassName.className()
+            " # $tag .. keep $router  from  $compileClassName".sout()
+            if (routesClassNames.add(router)) {
+                isIncrementalRoutesClassNames.add(router)
             }
-        } else {
-            val name = file.name
-            if (name.contains(arouterFilePrefix)) {
-                val router = className()
-                " # $tag .. keep $router  from  ${file.name}".sout()
-                if (routesClassNames.add(router)) {
-                    isIncrementalRoutesClassNames.add(router)
-                }
-                return FilterAction.noTransform
-            }
+            return FilterAction.noTransform
+        }
+        if (fileName == logisticsCenterClass) {
+            return FilterAction.transformLast
         }
         return FilterAction.noTransform
     }

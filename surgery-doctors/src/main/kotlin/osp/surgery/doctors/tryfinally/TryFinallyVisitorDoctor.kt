@@ -32,7 +32,7 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
         return FilterAction.transformNow
     }
 
-    override fun filterByClassName(file: File, className: () -> String): FilterAction {
+    override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         return FilterAction.transformNow
     }
 

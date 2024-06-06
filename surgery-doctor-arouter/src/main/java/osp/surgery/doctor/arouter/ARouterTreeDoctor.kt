@@ -16,21 +16,23 @@ import java.io.File
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 
-const val loadRouterMap = "loadRouterMap"
-const val arouterFilePrefix = "ARouter$$"
-const val logisticsCenterClass = "LogisticsCenter"
-const val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
-const val JTAG = "surgery"
 
 @AutoService(ClassTreeDoctor::class)
-class ArouteDoctor : ClassTreeDoctor() {
+class ARouterTreeDoctor : ClassTreeDoctor() {
+    private val JTAG = "surgery"
+    private val loadRouterMap = "loadRouterMap"
+    private val arouterFilePrefix = "ARouter$$"
+    private val logisticsCenterClass = "LogisticsCenter.class"
+    private val logisitscCenter = "com/alibaba/android/arouter/core/LogisticsCenter"
+
     //需要缓存起来 然后读取 过滤重复
     private val routesClassNames = mutableSetOf<String>()
+
     @Transient
     private val isIncrementalRoutesClassNames = mutableSetOf<String>()
 
     override fun toString(): String {
-        if(routesClassNames.isEmpty()){
+        if (routesClassNames.isEmpty()) {
             return super.toString()
         }
         return "${super.toString()}>$routesClassNames"
@@ -47,31 +49,16 @@ class ArouteDoctor : ClassTreeDoctor() {
         return FilterAction.noTransform
     }
 
-    override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar()) {
-            val name = className()
-            if (name.contains(arouterFilePrefix)) {
-                val router = className()
-                println(routesClassNames)
-                " # $tag .. keep $router  from  ${file.name}".sout()
-                if (routesClassNames.add(router)) {
-                    isIncrementalRoutesClassNames.add(router)
-                }
-                return FilterAction.noTransform
-            } else if (name.endsWith(logisticsCenterClass)) {
-                " # $tag >> fond LogisticsCenter [in] ${file.path}".sout()
-                return FilterAction.transformLast
+    override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
+        if (fileName.startsWith(arouterFilePrefix)) {
+            val router = compileClassName.className()
+            " # $tag .. keep $router  from  $fileName".sout()
+            if (routesClassNames.add(router)) {
+                isIncrementalRoutesClassNames.add(router)
             }
-        } else {
-            val name = file.name
-            if (name.contains(arouterFilePrefix)) {
-                val router = className()
-                " # $tag .. keep $router  from  ${file.name}".sout()
-                if (routesClassNames.add(router)) {
-                    isIncrementalRoutesClassNames.add(router)
-                }
-                return FilterAction.noTransform
-            }
+            return FilterAction.noTransform
+        } else if (fileName == logisticsCenterClass) {
+            return FilterAction.transformLast
         }
         return FilterAction.noTransform
     }
@@ -85,15 +72,18 @@ class ArouteDoctor : ClassTreeDoctor() {
         classNode.methods.find {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
-            insn.findAll(Opcodes.RETURN,Opcodes.ATHROW).forEach { ret ->
-                insn.insertLogCodeBefore(ret,"e", JTAG,"$logisitscCenter --> visitInsn")
+            insn.findAll(Opcodes.RETURN, Opcodes.ATHROW).forEach { ret ->
+                insn.insertLogCodeBefore(ret, "e", JTAG, "$logisitscCenter --> visitInsn")
 //                insn.insertBefore(ret, LdcInsnNode("Surgery"))
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))
                 isIncrementalRoutesClassNames.onEach {
                     "# $tag > Transforming $it".sout()
                     insn.insertBefore(ret, LdcInsnNode(it))
-                    insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, logisitscCenter, "register", "(Ljava/lang/String;)V", false))
+                    insn.insertBefore(
+                        ret,
+                        MethodInsnNode(Opcodes.INVOKESTATIC, logisitscCenter, "register", "(Ljava/lang/String;)V", false)
+                    )
                 }
             }
         }

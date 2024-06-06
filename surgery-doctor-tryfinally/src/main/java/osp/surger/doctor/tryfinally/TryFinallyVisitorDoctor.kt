@@ -27,17 +27,15 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
     }
 
     override fun filterByJar(jar: File): FilterAction {
+        val name = jar.name
+        if (name.contains("TraceCompat") || name.contains("Trace")) {
+            "$tag >> ignore $name".sout()
+            return FilterAction.noTransform
+        }
         return FilterAction.transformNow
     }
 
-    override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar()) {
-            val name = className()
-            if (name.endsWith("TraceCompat") || name.endsWith("Trace")) {
-                "$tag >> ignore $name".sout()
-                return FilterAction.noTransform
-            }
-        }
+    override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         return FilterAction.transformNow
     }
 

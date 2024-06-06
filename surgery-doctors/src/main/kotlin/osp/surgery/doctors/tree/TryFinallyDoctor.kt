@@ -14,7 +14,7 @@ import osp.surgery.doctors.tryfinally.TryFinally
 import osp.surgery.doctors.tryfinally.actions.MethodTimeLog
 import osp.surgery.doctors.tryfinally.actions.MethodTrace
 import osp.surgery.helper.JAPI
-import osp.surgery.helper.isJar
+import osp.surgery.helper.filterJar
 import osp.surgery.helper.isMethodIgnore
 import osp.surgery.helper.sout
 import java.io.File
@@ -36,20 +36,15 @@ open class TryFinallyDoctor : ClassTreeDoctor(), MethodProcess {
     }
 
     override fun filterByJar(jar: File): FilterAction {
-//        if (jar.filterJar()) {
-//            return FilterAction.noTransform
-//        }
+        if (jar.filterJar()) {
+            val name = jar.name
+            "$tag >> ignore $name".sout()
+            return FilterAction.noTransform
+        }
         return FilterAction.transformNow
     }
 
-    override fun filterByClassName(file: File, className: () -> String): FilterAction {
-        if (file.isJar()) {
-            val name = className()
-            if (name.endsWith("TraceCompat") || name.endsWith("Trace")) {
-                "$tag >> ignore $name".sout()
-                return FilterAction.noTransform
-            }
-        }
+    override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         return FilterAction.transformNow
     }
 

@@ -2,8 +2,8 @@
 
 //buildscript {
 //    dependencies {
-//        classpath("osp.sparkj.plugin:surgery:2023.03.19")
-//        classpath("osp.sparkj.plugin:surgery-doctors:2023.03.19")
+//        classpath("osp.sparkj.plugin:surgery:2024.06.06")
+//        classpath("osp.sparkj.plugin:surgery-doctors:2024.06.06")
 //    }
 //}
 

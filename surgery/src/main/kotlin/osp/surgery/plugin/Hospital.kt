@@ -31,7 +31,6 @@ class Hospital : Plugin<Project> {
                 val taskProvider = project.tasks.register<SurgeryTask>("Surgery${variant.name}Classes") {
                     tag = "1"
                 }
-
                 // Register modify classes task
                 variant.artifacts.forScope(ScopedArtifacts.Scope.ALL)
                     .use(taskProvider)

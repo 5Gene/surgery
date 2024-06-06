@@ -11,6 +11,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import osp.surgery.helper.sout
 import osp.surgery.plugin.plan.ProjectSurgeryImpl
+import osp.surgery.plugin.plan.SurgeryMeds
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -38,7 +39,7 @@ abstract class SurgeryTask : DefaultTask() {
     @Internal
     val jarPaths = mutableSetOf<String>()
 
-    @Internal
+    @get:Internal
     private val surgery = ProjectSurgeryImpl()
 
     @get:Internal
@@ -62,21 +63,7 @@ abstract class SurgeryTask : DefaultTask() {
         // we just copying classes fromjar files without modification
         val jarCost = measureTimeMillis {
             allInputJars.forEach { file ->
-                val inputFile = file.asFile
-                val jarFile = JarFile(inputFile)
-                val cost = measureTimeMillis {
-                    val entries = jarFile.entries()
-                    entries.asSequence().forEachIndexed { index, jarEntry ->
-                        if (jarEntry.isDirectory) {
-                            println("xxx ${jarEntry.name}")
-                            return@forEachIndexed
-                        }
-                        println("-- ${jarEntry.name}")
-                        jarOutput.writeEntity(jarEntry.name, jarFile.getInputStream(jarEntry))
-                    }
-                }
-                println("$tag > jar handling $inputFile cost:$cost")
-                jarFile.close()
+                reviewJarFile(file.asFile, jarOutput)
             }
         }
         println("$tag > jar handling cost:$jarCost")
@@ -86,40 +73,97 @@ abstract class SurgeryTask : DefaultTask() {
         val dirCost = measureTimeMillis {
             allInputDirs.forEach { directory ->
                 val cost = measureTimeMillis {
-                    directory.asFile.walk().forEach { file ->
-                        if (file.isFile) {
-                            if (file.name.endsWith("SomeSource.class")) {
-                                println("Found $file.name")
-                                val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
-                                jarOutput.writeEntity(relativePath.replace(File.separatorChar, '/'), file.inputStream())
-                            } else {
-                                // if class is not SomeSource.class - just copy it to output without modification
-                                val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
-                                jarOutput.writeEntity(relativePath.replace(File.separatorChar, '/'), file.inputStream())
-                                println("$tag Adding from dir $relativePath")
-                            }
-                        }
-                    }
+                    reviewDirectory(directory, jarOutput)
                 }
                 println("$tag > dir handling ${directory.asFile.absolutePath} cost:$cost")
             }
         }
         println("$tag > dir handling cost:$dirCost")
 
+        surgery.surgeryOver()?.let { grandFinales ->
+            grandFinales.forEach {
+                jarOutput.writeByte(it.first, it.second)
+            }
+        }
+
         jarOutput.close()
 
-        surgery.surgeryOver()
         val cost = System.nanoTime() - nanoStartTime
         " # ${this.javaClass.simpleName} == cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}".sout()
         Dean.context.release()
         println("$tag ===============================================================================")
     }
 
+    private fun reviewDirectory(directory: Directory, jarOutput: JarOutputStream) {
+        directory.asFile.walk().forEach { file ->
+            if (file.isFile) {
+                val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
+                val compileClassName = relativePath.replace(File.separatorChar, '/')
+                println("$tag Adding from dir ${file.name}")
+                println("$tag Adding from dir $relativePath")
+                when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, file.inputStream())) {
+                    is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
+                    is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
+                    null -> println("null")
+                }
+            }
+        }
+    }
+
+    private fun reviewJarFile(file: File, jarOutput: JarOutputStream) {
+        val jarFile = JarFile(file)
+        val cost = measureTimeMillis {
+            val surgeryOnJar = surgery.surgeryCheckJar(file)
+            val action: ((Int, JarEntry) -> Unit) = if (surgeryOnJar) {
+                { index: Int, jarEntry: JarEntry ->
+                    val compileClassName = jarEntry.name
+                    val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
+                    println("$tag Adding from jar $fileName")
+                    println("$tag Adding from jar $compileClassName")
+                    val inputJarStream = jarFile.getInputStream(jarEntry)
+                    when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, inputJarStream)) {
+                        is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
+                        is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
+                        null -> println("null")
+                    }
+                }
+            } else {
+                { _, jarEntry ->
+                    val compileClassName = jarEntry.name
+                    val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
+                    println("$tag Adding from jar $fileName")
+                    println("$tag Adding from jar $compileClassName")
+                    jarOutput.writeEntity(jarEntry.name, jarFile.getInputStream(jarEntry))
+                }
+            }
+            jarFile.entries().asSequence().forEachIndexed { index, jarEntry ->
+                if (jarEntry.isDirectory) {
+                    return@forEachIndexed
+                }
+                action(index, jarEntry)
+            }
+        }
+        println("$tag > jar handling $jarFile cost:$cost")
+        jarFile.close()
+    }
+
 
     // writeEntity methods check if the file has name that already exists in output jar
+    private fun JarOutputStream.writeByte(name: String, entryByte: ByteArray) {
+        // check for duplication name first
+        if (jarPaths.contains(name)) {
+            printDuplicatedMessage(name)
+        } else {
+            putNextEntry(JarEntry(name))
+            write(entryByte)
+            closeEntry()
+            jarPaths.add(name)
+        }
+    }
+
     private fun JarOutputStream.writeEntity(name: String, inputStream: InputStream) {
         // check for duplication name first
-        if (name.endsWith("/") || jarPaths.contains(name)) {
+        if (jarPaths.contains(name)) {
             printDuplicatedMessage(name)
         } else {
             putNextEntry(JarEntry(name))
@@ -129,37 +173,6 @@ abstract class SurgeryTask : DefaultTask() {
         }
     }
 
-    private fun JarOutputStream.writeEntity(relativePath: String, byteArray: ByteArray) {
-        // check for duplication name first
-        if (jarPaths.contains(relativePath)) {
-            printDuplicatedMessage(relativePath)
-        } else {
-            putNextEntry(JarEntry(relativePath))
-            write(byteArray)
-            closeEntry()
-            jarPaths.add(relativePath)
-        }
-    }
-
     private fun printDuplicatedMessage(name: String) =
         println("Cannot add ${name}, because output Jar already has file with the same name.")
-
-
-    private fun reviewJarFile(
-        it: TransformInput,
-        transformInvocation: TransformInvocation
-    ) {
-        " # ${this.javaClass.simpleName} ***** surgeryOnJar: ${jar.file.name}".sout()
-        surgery.surgeryOnJar(jar.file, destJarFile)
-    }
-
-    private fun reviewDirectory(
-        it: TransformInput,
-        transformInvocation: TransformInvocation
-    ) {
-        " # ${this.javaClass.simpleName} ***** surgeryOnDirectory: ${srcDirectory.name}".sout()
-        srcDirectory.walk().filter { it.isFile }.forEach {
-            surgery.surgeryOnFile(it, srcDirectory, destDirectory)
-        }
-    }
 }

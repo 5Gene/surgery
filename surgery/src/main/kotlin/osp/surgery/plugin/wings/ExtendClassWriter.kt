@@ -8,11 +8,13 @@ import java.io.IOException
 /**
  * Created by quinn on 30/08/2018
  */
+//https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/internal/instrumentation/FixFramesClassWriter.kt
 class ExtendClassWriter(flags: Int) : ClassWriter(flags) {
     /**
      * https://github.com/Moniter123/pinpoint/blob/40106ffe6cc4d6aea9d59b4fb7324bcc009483ee/profiler/src/main/java/com/navercorp/pinpoint/profiler/instrument/ASMClassWriter.java
      */
     override fun getCommonSuperClass(type1: String?, type2: String?): String {
+
         if (type1 == null || type1 == OBJECT || type2 == null || type2 == OBJECT) {
             return OBJECT
         }

@@ -1,10 +1,5 @@
 apply plugin: 'maven-publish'
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.kotlin.srcDirs
-    classifier "sources"
-}
-
 //https://plugins.gradle.org/docs/publish-plugin
 afterEvaluate {
     publishing {

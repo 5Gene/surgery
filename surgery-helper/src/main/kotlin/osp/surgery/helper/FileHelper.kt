@@ -84,6 +84,10 @@ fun File.isJar(): Boolean {
     return name.isJar()
 }
 
+fun File.isClass(): Boolean {
+    return name.isClass()
+}
+
 fun File.touch(): File {
     FileUtils.touch(this)
     return this

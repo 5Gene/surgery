@@ -8,5 +8,6 @@ package osp.surgery.api
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 enum class FilterAction {
-    noTransform, transformLast, transformNow, transformNowLast
+    noTransform, transformLast, transformNow
 }
+

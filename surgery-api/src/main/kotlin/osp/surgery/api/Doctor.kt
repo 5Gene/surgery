@@ -17,7 +17,7 @@ interface ClassDoctor {
 
     fun surgeryPrepare()
     fun filterByJar(jar: File): FilterAction
-    fun filterByClassName(file: File, className: () -> String): FilterAction
+    fun filterByClassName(fileName: String, compileClassName: String): FilterAction
     fun surgeryOver()
 }
 

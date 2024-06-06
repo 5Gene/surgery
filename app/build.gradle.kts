@@ -1,9 +1,7 @@
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
-import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationParameters
-import com.android.build.api.instrumentation.InstrumentationScope
 import org.objectweb.asm.ClassVisitor
 
 //https://developer.android.google.cn/studio/intro/studio-config?hl=zh-cn
@@ -43,29 +41,33 @@ interface ParametersImpl : InstrumentationParameters {
 abstract class LogAsmClassVisitorFactory : AsmClassVisitorFactory<ParametersImpl> {
 
     override fun createClassVisitor(classContext: ClassContext, nextClassVisitor: ClassVisitor): ClassVisitor {
+//        instrumentationContext.apiVersion.get().sout()
+//        589824
         return nextClassVisitor
     }
 
     override fun isInstrumentable(classData: ClassData): Boolean {
         //https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/internal/instrumentation/AsmInstrumentationManager.kt;l=65?q=AsmInstrumentationManager&sq=
-        println("xxx >> ${classData.className}")
+//        println("xxx >> ${classData.className}")
         return false
     }
 }
 
-androidComponents {
-    onVariants { variants ->
-        variants.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COPY_FRAMES)
-        variants.instrumentation.transformClassesWith(
-            LogAsmClassVisitorFactory::class.java,
-            InstrumentationScope.ALL
-        ) { params ->
-            // parameters configuration
-            params.intValue.set(1)
-            params.listOfStrings.set(listOf("a", "b"))
-        }
-    }
-}
+//androidComponents {
+//    onVariants { variants ->
+//        variants.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COPY_FRAMES)
+//        variants.instrumentation.transformClassesWith(
+//            LogAsmClassVisitorFactory::class.java,
+//            InstrumentationScope.ALL
+//        ) { params ->
+//            // parameters configuration
+//            params.intValue.set(1)
+//            params.listOfStrings.set(listOf("a", "b"))
+//        }
+//    }
+//}
+
+
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies {
 //    implementation("androidx.core:core-ktx:1.10.1")
