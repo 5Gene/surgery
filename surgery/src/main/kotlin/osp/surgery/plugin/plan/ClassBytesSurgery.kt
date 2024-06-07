@@ -97,12 +97,13 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     abstract fun doSurgery(doctors: List<DOCTOR>, classFileByte: ByteArray): ByteArray
 
     override fun surgeryOver() {
-        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $this surgeryOver \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+
+        "👇👇👇👇👇 $this surgeryOver 👇👇👇👇👇".sout()
         chiefDoctors.get().clear()
         doctors.forEach {
             it.surgeryOver()
         }
-        "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $this surgeryOver \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
+        "👆👆👆👆👆 $this surgeryOver 👆👆👆👆👆".sout()
     }
 }
 

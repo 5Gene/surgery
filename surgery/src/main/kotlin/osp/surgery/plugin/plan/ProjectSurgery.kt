@@ -3,7 +3,6 @@ package osp.surgery.plugin.plan
 import osp.surgery.api.ClassBytesSurgery
 import osp.surgery.api.FilterAction
 import osp.surgery.helper.*
-import osp.surgery.plugin.or.OperatingRoom
 import java.io.File
 import java.io.InputStream
 import java.util.*
@@ -16,9 +15,9 @@ import java.util.*
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 
-sealed class SurgeryMeds {
-    class Byte(val value: ByteArray) : SurgeryMeds()
-    data class Stream(val value: InputStream) : SurgeryMeds()
+sealed class SurgeryMeds(open val compileClassName: String) {
+    class Byte(override val compileClassName: String, val value: ByteArray) : SurgeryMeds(compileClassName)
+    data class Stream(override val compileClassName: String, val value: InputStream) : SurgeryMeds(compileClassName)
 }
 
 //interferes
@@ -39,7 +38,6 @@ interface ProjectSurgery {
 
 class ProjectSurgeryImpl : ProjectSurgery {
     val classSurgeries = mutableListOf<ClassBytesSurgery>()
-    private val scheduler = OperatingRoom()
     private val grandFinales: MutableList<GrandFinale<ClassBytesSurgery>> = mutableListOf<GrandFinale<ClassBytesSurgery>>()
 
     init {
@@ -98,11 +96,11 @@ class ProjectSurgeryImpl : ProjectSurgery {
     ): SurgeryMeds? {
         if (classSurgeries.isEmpty()) {
             " # ${this.javaClass.simpleName} ==== surgeryOnClass classSurgeries is empty: $fileName ==== ".sout()
-            return SurgeryMeds.Stream(inputJarStream)
+            return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
         if (fileName.skipByFileName()) {
             " # ${this.javaClass.simpleName} ==== surgeryOnClass > skip > class: $fileName".sout()
-            return SurgeryMeds.Stream(inputJarStream)
+            return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
         //如果都不处理就直接复制文件就行了
         val grouped = classSurgeries.groupBy {
@@ -119,13 +117,13 @@ class ProjectSurgeryImpl : ProjectSurgery {
             //如果现在要处理的不为空, 就现在处理
             " # ${this.javaClass.simpleName} ==== surgeryOnClass > transform now > class: $fileName".sout()
             val bytes = inputJarStream.readBytes()
-            return SurgeryMeds.Byte(nowGroup.fold(bytes) { acc, more ->
+            return SurgeryMeds.Byte(compileClassName, nowGroup.fold(bytes) { acc, more ->
                 more.surgery(fileName, acc)
             })
         }
         " # ${this.javaClass.simpleName} ==== surgeryOnClass no transform > class: $fileName".sout()
         //没有未来处理的也没有现在要处理的
-        return SurgeryMeds.Stream(inputJarStream)
+        return SurgeryMeds.Stream(compileClassName, inputJarStream)
     }
 
     override fun surgeryOver(): List<Pair<String, ByteArray>>? {

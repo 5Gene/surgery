@@ -11,16 +11,16 @@ import java.util.concurrent.Executors
  * @since [https://github.com/5hmlA]
  * <p><a href="https://github.com/5hmlA">github</a>
  */
-class OperatingRoom {
-    private val cpuCount = Runtime.getRuntime().availableProcessors()
+object OperatingRoom {
+    val cpuCount = Runtime.getRuntime().availableProcessors()
     private val workExecutor: ExecutorService = Executors.newWorkStealingPool(cpuCount)
 
     private val features: MutableList<java.util.concurrent.Future<*>> = mutableListOf()
 
     fun submit(task: Runnable) {
-        task.run()
-//        val feature = workExecutor.submit(task)
-//        features.add(feature)
+//        task.run()
+        val feature = workExecutor.submit(task)
+        features.add(feature)
     }
 
     fun await() {
