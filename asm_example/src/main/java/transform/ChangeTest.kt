@@ -20,6 +20,11 @@ object Change {
     fun use(msg: String) {
         println("msg from Change= [${msg}]")
     }
+
+    @JvmStatic
+    fun one(msg: String) {
+        println("msg from Change= [${msg}]")
+    }
 }
 
 open class PP(string: String, intt: Int) {}
@@ -34,7 +39,7 @@ open class BeUse {
 class Origin : PP(",", 0) {
 
     init {
-        println("chushihua")
+        println(1.toString())
         println("chushihua")
         println("chushihua")
         println("chushihua")
@@ -56,10 +61,12 @@ class Origin : PP(",", 0) {
     fun testNewB(msg: String) {
         val beUse = BeUse()
         beUse.use("msg")
+        Change.one("")
     }
 
     fun retlist(string: String): MutableMap<String, String>? {
-        return null
+        ArrayList<String>()
+        return HashMap()
     }
 }
 
@@ -109,8 +116,8 @@ class ChangeVisitor(classWriter: ClassWriter) : ClassVisitor(Opcodes.ASM9, class
         if (name == "testDo" || name == "testDoField" || name == "testNewB") {
             return object : MethodVisitor(Opcodes.ASM9, visitMethod) {
                 override fun visitMethodInsn(opcode: Int, owner: String?, name: String?, descriptor: String?, isInterface: Boolean) {
+                    println("opcode = [${opcode}], owner = [${owner}], name = [${name}], descriptor = [${descriptor}], isInterface = [${isInterface}]")
                     if (name == "use") {
-                        println("opcode = [${opcode}], owner = [${owner}], name = [${name}], descriptor = [${descriptor}], isInterface = [${isInterface}]")
                         super.visitMethodInsn(
                             Opcodes.INVOKESTATIC,
                             "transform/Change",
@@ -148,4 +155,5 @@ fun main() {
     (defineClass.getMethod("testNewB", String::class.java).invoke(origin, "11"))
     (defineClass.getMethod("testDoField", String::class.java).invoke(origin, "11"))
 
+    println("(Ljava/lang/String;)V".substring(1))
 }

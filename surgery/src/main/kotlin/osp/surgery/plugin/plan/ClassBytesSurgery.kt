@@ -111,7 +111,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
 class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
-        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $tag : loadDoctors \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         val supers = mutableListOf<String>()
         val classTreeDoctors = ServiceLoader.load(ClassTreeDoctor::class.java)
@@ -126,7 +126,7 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
             " # $tag === ClassTreeSurgery ==== ${it.javaClass.name}".sout()
             it.className to it
         }.toMap().toMutableMap().also {
-            "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $tag : loadDoctors \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
+            "👆👆👆👆👆 $tag : loadDoctors 👆👆👆👆👆".sout()
         }
     }
 
@@ -148,10 +148,10 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 //                classesHierarchyResolver,
 //                issueHandler
 //            )
-            return ClassWriter(ClassWriter.COMPUTE_MAXS).also { writer ->
+            return ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS).also { writer ->
                 doctors.fold(ClassNode().also { originNode ->
                     ClassReader(classFileByte).accept(
-                        originNode, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES
+                        originNode, ClassReader.SKIP_DEBUG or ClassReader.EXPAND_FRAMES
                     )
                 }) { classNode, doctor ->
                     try {
@@ -177,7 +177,7 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 @AutoService(ClassBytesSurgery::class)
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
-        "\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47 $tag : loadDoctors \uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47\uD83D\uDC47".sout()
+        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
         val classVisitorDoctors = ServiceLoader.load(ClassVisitorDoctor::class.java)
         if (!classVisitorDoctors.iterator().hasNext()) {
             return mutableMapOf()
@@ -192,7 +192,7 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
             " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
             it.className to it
         }.toMap().toMutableMap().also {
-            "\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46 $tag : loadDoctors \uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46\uD83D\uDC46".sout()
+            "👆👆👆👆👆 $tag : loadDoctors 👆👆👆👆👆".sout()
         }
     }
 
@@ -212,7 +212,7 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
         try {
 //            val fixFramesClassWriter = "com.android.build.gradle.internal.instrumentation.FixFramesClassWriter"
 //            val loadClass = this.javaClass.classLoader.loadClass(fixFramesClassWriter)
-            return ClassWriter(ClassWriter.COMPUTE_MAXS).also {
+            return ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS).also {
                 ClassReader(classFileByte).accept(doctors.fold(it as ClassVisitor) { acc, doctor ->
                     try {
                         doctor.surgery(acc)
@@ -221,7 +221,9 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
                         acc
                     }
                     //EXPAND_FRAMES 说明在读取 class 的时候同时展开栈映射帧(StackMap Frame)
-                }, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
+                    //ClassReader.SKIP_DEBUG：跳过调试信息，提高处理速度，减小字节码大小。
+                    //ClassReader.EXPAND_FRAMES：展开栈帧，简化字节码操作，特别是需要修改栈帧的操作。
+                }, ClassReader.SKIP_DEBUG or ClassReader.EXPAND_FRAMES)
             }.toByteArray()
         } catch (e: Exception) {
             "$tag >>> error >>> [byte to asm] > ${e.message}".sout()
