@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.jvm)
 }
 
 project.ext {

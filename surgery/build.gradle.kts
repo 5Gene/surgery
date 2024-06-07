@@ -2,7 +2,7 @@
 plugins {
     id("java-gradle-plugin")
     alias(libs.plugins.ksp)
-    `kotlin-dsl`
+    alias(libs.plugins.kotlin.jvm)
 }
 
 //repositories {
