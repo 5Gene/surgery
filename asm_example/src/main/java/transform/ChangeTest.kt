@@ -13,12 +13,12 @@ object Change {
 
     @JvmStatic
     fun use(beUse: BeUse, msg: String) {
-        beUse.use(msg)
+        println("msg from Change= [${msg}]")
     }
 
     @JvmStatic
     fun use(msg: String) {
-        println("msg = [${msg}]")
+        println("msg from Change= [${msg}]")
     }
 }
 
@@ -27,6 +27,7 @@ class Child(string: String) : PP(string, 9) {}
 open class BeUse {
     fun use(msg: String) {
         println(msg)
+        println("---------- from BeUse ")
     }
 }
 
@@ -50,6 +51,11 @@ class Origin : PP(",", 0) {
 
     fun testDoField(msg: String) {
         beUse.use(msg)
+    }
+
+    fun testNewB(msg: String) {
+        val beUse = BeUse()
+        beUse.use("msg")
     }
 
     fun retlist(string: String): MutableMap<String, String>? {
@@ -100,7 +106,7 @@ class ChangeVisitor(classWriter: ClassWriter) : ClassVisitor(Opcodes.ASM9, class
                 }
             }
         }
-        if (name == "testDo" || name == "testDoField") {
+        if (name == "testDo" || name == "testDoField" || name == "testNewB") {
             return object : MethodVisitor(Opcodes.ASM9, visitMethod) {
                 override fun visitMethodInsn(opcode: Int, owner: String?, name: String?, descriptor: String?, isInterface: Boolean) {
                     if (name == "use") {
@@ -136,10 +142,10 @@ fun main() {
     //输出文件查看
     ClassOutputUtil.byte2File("asm_example/files/Change.class", classWriter.toByteArray())
 
-    println(Origin().retlist(""))
-
     val defineClass = MyLoader().defineClass("transform.Origin", classWriter.toByteArray())!!
     val origin = defineClass.newInstance()
-    println(defineClass.getMethod("retlist", String::class.java).invoke(origin, ""))
+    println("--=====================================")
+    (defineClass.getMethod("testNewB", String::class.java).invoke(origin, "11"))
+    (defineClass.getMethod("testDoField", String::class.java).invoke(origin, "11"))
 
 }
