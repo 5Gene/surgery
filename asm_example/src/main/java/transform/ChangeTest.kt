@@ -77,6 +77,15 @@ object Change {
     }
 }
 
+object Log {
+
+    @JvmStatic
+    fun e(tag: String, msg: String): Int {
+        println("tag = [${tag}], msg = [${msg}]")
+        return 0
+    }
+}
+
 open class PP(string: String, intt: Int) {
     init {
         println("9000")
@@ -84,7 +93,34 @@ open class PP(string: String, intt: Int) {
         println("9000")
         println("9000")
     }
+
+    fun errorDouble(ss: String?): Double {
+        //TRYCATCHBLOCK L0 L1 L2 java/lang/Exception
+        try {
+            Log.e("tag", "ioo")
+            return 0.1
+        } catch (e: Exception) {
+            //FRAME SAME1 java/lang/Exception
+            //ALOAD 2
+            //INVOKEVIRTUAL java/lang/Exception.printStackTrace ()V
+            e.printStackTrace()
+        }
+        return 0.2
+    }
+
+    fun errorVoid(ss: String?) {
+        //TRYCATCHBLOCK L0 L1 L2 java/lang/Exception
+        try {
+            Log.e("tag", "ioo")
+        } catch (e: Exception) {
+            //FRAME SAME1 java/lang/Exception
+            //ALOAD 2
+            //INVOKEVIRTUAL java/lang/Exception.printStackTrace ()V
+            e.printStackTrace()
+        }
+    }
 }
+
 class Child(string: String) : PP(string, 9) {}
 open class BeUse {
     fun use(msg: String) {

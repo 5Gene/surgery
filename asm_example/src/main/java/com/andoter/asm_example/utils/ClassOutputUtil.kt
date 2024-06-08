@@ -6,7 +6,7 @@ import java.io.FileOutputStream
 
 object ClassOutputUtil {
 
-    fun byte2File(outputPath: String, sourceByte: ByteArray) {
+    fun byte2File(outputPath: String, sourceByte: ByteArray): String {
         val file = File(outputPath)
         if (file.exists()) {
             file.delete()
@@ -22,5 +22,6 @@ object ClassOutputUtil {
         outputStream.flush()
         outputStream.close()
         inputStream.close()
+        return file.absolutePath
     }
 }

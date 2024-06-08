@@ -25,7 +25,6 @@ jobs:
         run: chmod +x gradlew
       - name: 💪 build apk
         run: ./gradlew assembleDebug
-
       - run: echo "💡  build succeed."
 
       - name: 📸 Upload APK

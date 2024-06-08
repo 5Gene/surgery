@@ -5,7 +5,6 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.util.CheckMethodAdapter
 
 /**
  * 在前面的章节中，我们了解到 CheckClassAdapter 用于检查 ClassVisitor 方法调用的顺序是否正确，参数是否有效。
@@ -30,7 +29,7 @@ fun main() {
             exceptions: Array<out String>?
         ): MethodVisitor {
             var methodVisitor = cv.visitMethod(access, name, descriptor, signature, exceptions)
-            methodVisitor = CheckMethodAdapter(methodVisitor)
+//            methodVisitor = CheckMethodAdapter(methodVisitor)
             return MyMethodAdapter(methodVisitor)
         }
     }

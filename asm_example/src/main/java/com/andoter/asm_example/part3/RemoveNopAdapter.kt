@@ -1,6 +1,7 @@
 package com.andoter.asm_example.part3
 
 import com.andoter.asm_example.utils.ClassOutputUtil
+import openWithJadx
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -48,5 +49,5 @@ fun main() {
     val remoteVisitor = RemoveNopAdapterVisitor(Opcodes.ASM9, classWriter)
     classReader.accept(remoteVisitor, ClassReader.SKIP_DEBUG)
 
-    ClassOutputUtil.byte2File("asm_example/files/ArrayList.class", classWriter.toByteArray())
+    openWithJadx(ClassOutputUtil.byte2File("asm_example/files/ArrayList.class", classWriter.toByteArray()))
 }

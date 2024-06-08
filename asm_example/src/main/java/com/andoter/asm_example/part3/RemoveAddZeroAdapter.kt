@@ -1,6 +1,8 @@
 package com.andoter.asm_example.part3
 
 import com.andoter.asm_example.utils.ClassOutputUtil
+import helper.LoggingMethodVisitor
+import openWithJadx
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -40,7 +42,8 @@ fun main() {
             exceptions: Array<out String>?
         ): MethodVisitor {
             val methodVisitor = cv.visitMethod(access, name, descriptor, signature, exceptions)
-            return RemoteZeroAdapter(methodVisitor)
+            return LoggingMethodVisitor(mv = methodVisitor)
+//            return RemoteZeroAdapter(methodVisitor)
         }
     }
     classReader.accept(classVisitor, ClassReader.SKIP_DEBUG)
@@ -55,7 +58,7 @@ fun main() {
          9: ldc           #14                 // String result =
         11: invokevirtual #18
      */
-    ClassOutputUtil.byte2File("asm_example/files/RemoteZeroAdapter.class", classWriter.toByteArray())
+    openWithJadx(ClassOutputUtil.byte2File("asm_example/files/RemoteZeroAdapter.class", classWriter.toByteArray()))
 }
 
 abstract class PatternMethodVisitor(api: Int, methodVisitor: MethodVisitor?) :
