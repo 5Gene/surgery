@@ -8,8 +8,54 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.ClassNode
+
+
+class T {
+    fun ttt2(i: Int, s: String): Int {
+        return 0
+    }
+
+    fun ttt(i: Double) {}
+    fun tttStr(i: Double): String = "wwwww"
+    fun tttAae(vararg i: Double?): String? = "wwwwwww"
+
+    fun retDou(i: Int, d: Double): Array<String>? = null
+
+    fun retDous(i: Int, d: Double, s: String): Double = 0.1
+
+    fun methoObj(aa: Int, ll: List<String>?): Double {
+        return 0.1
+    }
+}
 
 object Change {
+    fun retlist(string: String?): List<String>? {
+        return emptyList<String>()
+    }
+
+    fun retlist(int: Int?): Map<String, String>? {
+        return emptyMap()
+    }
+
+    fun retInt(int: Int?): Double {
+        return 0.9
+    }
+
+    @JvmStatic
+    fun retIt(int: Int?): Long {
+        return 0L
+    }
+
+    fun returnV(int: Double?, D: Int) {
+    }
+
+    fun returnArr(int: Array<String>) {
+    }
+
+    fun varar(vararg int: String?) {
+    }
+
 
     @JvmStatic
     fun use(beUse: BeUse, msg: String) {
@@ -25,9 +71,20 @@ object Change {
     fun one(msg: String) {
         println("msg from Change= [${msg}]")
     }
+
+    init {
+        println("")
+    }
 }
 
-open class PP(string: String, intt: Int) {}
+open class PP(string: String, intt: Int) {
+    init {
+        println("9000")
+        println("9000")
+        println("9000")
+        println("9000")
+    }
+}
 class Child(string: String) : PP(string, 9) {}
 open class BeUse {
     fun use(msg: String) {
@@ -36,14 +93,13 @@ open class BeUse {
     }
 }
 
-class Origin : PP(",", 0) {
+object Origin : PP(",", 0) {
 
     init {
-        println(1.toString())
-        println("chushihua")
-        println("chushihua")
-        println("chushihua")
-        println("chushihua")
+        println("9000")
+        println("9000")
+        println("9000")
+        println("9000")
     }
 
     val beUse = BeUse()
@@ -64,9 +120,9 @@ class Origin : PP(",", 0) {
         Change.one("")
     }
 
-    fun retlist(string: String): MutableMap<String, String>? {
-        ArrayList<String>()
-        return HashMap()
+    fun retlist(string: String?): List<String>? {
+        return emptyList<String>()
+//        return HashMap()
     }
 }
 
@@ -156,4 +212,15 @@ fun main() {
     (defineClass.getMethod("testDoField", String::class.java).invoke(origin, "11"))
 
     println("(Ljava/lang/String;)V".substring(1))
+
+    val classReader2 = ClassReader("T")
+    val classNode: ClassNode = ClassNode()
+//    classReader2.accept(classNode)
+
+    for (methodNode in classNode.methods) {
+        System.out.println("方法名：" + methodNode.name)
+        System.out.println("maxLocals：" + methodNode.maxLocals)
+        System.out.println("maxStack：" + methodNode.maxStack)
+        println("----------------------")
+    }
 }

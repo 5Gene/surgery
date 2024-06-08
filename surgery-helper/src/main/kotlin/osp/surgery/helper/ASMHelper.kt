@@ -20,6 +20,7 @@ fun logCode(mv: MethodVisitor, tag: String, msg: String) {
 }
 
 fun logCode(mv: MethodVisitor, level: String, tag: String, msg: String) {
+    //加载字符串
     mv.visitLdcInsn(tag)
     mv.visitLdcInsn(msg)
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Log", level, "(Ljava/lang/String;Ljava/lang/String;)I", false)
