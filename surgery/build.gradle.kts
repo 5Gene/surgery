@@ -19,9 +19,9 @@ project.ext {
 //思路和booster一样 一个plugin一次文件复制，执行所有transform
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
-//    ksp("dev.zacsweers.autoservice:auto-service-ksp:+")
+    ksp(wings.auto.service)
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
-    implementation("com.google.auto.service:auto-service-annotations:1.1.0")
+    implementation(libs.google.auto.service.anno)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.core.jvm)
     implementation("osp.sparkj.plugin:surgery-api:2024.06.06")

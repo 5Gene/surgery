@@ -40,7 +40,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "surgery"
 
-def asm_test = true
+def asm_test = false
 if (asm_test) {
     include ':asm_example'
 } else {
