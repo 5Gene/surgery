@@ -95,10 +95,7 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
                     mv.visitTryCatchBlock(
                         beforeOriginalCode,
                         afterOriginalCode,
-                        afterOriginalCode,
-                        null
-                    )
-                    mv.visitLabel(beforeOriginalCode)
+                        afterOriginalCodv.visitLabel(beforeOriginalCode)
                     super.visitCode()
                 }
 

@@ -245,6 +245,9 @@ fun MethodNode.isEmptyBody(): Boolean {
 fun Int.isReturn(): Boolean {
     return (this <= Opcodes.RETURN && this >= Opcodes.IRETURN)
 }
+fun Int.isMethodExit(): Boolean {
+    return isReturn() || this == Opcodes.ATHROW
+}
 
 fun Int.isMethodInvoke(): Boolean {
     return (this <= Opcodes.INVOKEDYNAMIC && this >= Opcodes.INVOKEVIRTUAL)
