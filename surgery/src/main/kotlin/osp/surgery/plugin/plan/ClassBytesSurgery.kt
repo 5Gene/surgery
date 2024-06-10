@@ -1,6 +1,5 @@
 package osp.surgery.plugin.plan
 
-import com.google.auto.service.AutoService
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -10,6 +9,7 @@ import osp.surgery.helper.*
 import java.io.File
 import java.lang.reflect.Modifier
 import java.util.*
+import kotlin.concurrent.getOrSet
 
 /**
  * @author yun.
@@ -28,6 +28,10 @@ class GrandFinale<DOCTOR>(
 abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     val tag = this.javaClass.simpleName
     private val chiefDoctors = ThreadLocal<MutableMap<String, List<DOCTOR>>>()
+
+    //最后处理的文件线程可能会变，临时保存一份，后续取来用
+    @Volatile
+    private var lastDoctor: List<DOCTOR>? = null
 
     /**
      * 可能是 ClassTreeDoctor或者ClassTreeDoctor
@@ -77,8 +81,11 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
         val lastGroup = grouped[FilterAction.transformLast].orEmpty()
         val operatingSurgeons = nowGroup + lastGroup
         if (operatingSurgeons.isNotEmpty()) {
-            chiefDoctors.get()[fileName] = operatingSurgeons
+            chiefDoctors.getOrSet {
+                mutableMapOf()
+            }[fileName] = operatingSurgeons
             if (lastGroup.isNotEmpty()) {
+                lastDoctor = operatingSurgeons
                 //只要有最后处理的,就放最后处理,此次不处理
                 return FilterAction.transformLast
             }
@@ -88,7 +95,9 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     }
 
     override fun surgery(fileName: String, classFileByte: ByteArray): ByteArray {
-        chiefDoctors.get()[fileName]?.apply {
+        //如果是最后处理的话可能线程会变
+        //如果不是最后处理，那么过滤完要处理的时候同一个线程立刻会处理执行surgery,也就是说非最后处理的filterByClassName和surgery方法在同一线程执行
+        (chiefDoctors.get()?.remove(fileName) ?: lastDoctor)?.apply {
             return doSurgery(this, classFileByte)
         }
         return classFileByte
@@ -99,7 +108,7 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     override fun surgeryOver() {
 
         "👇👇👇👇👇 $this surgeryOver 👇👇👇👇👇".sout()
-        chiefDoctors.get().clear()
+        chiefDoctors.get()?.clear()
         doctors.forEach {
             it.surgeryOver()
         }
@@ -107,17 +116,16 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     }
 }
 
-@AutoService(ClassBytesSurgery::class)
 class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
 
     override fun loadDoctors(): MutableMap<String, ClassTreeDoctor> {
-        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
-        val supers = mutableListOf<String>()
         val classTreeDoctors = ServiceLoader.load(ClassTreeDoctor::class.java)
         if (!classTreeDoctors.iterator().hasNext()) {
             return mutableMapOf()
         }
+        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
+        val supers = mutableListOf<String>()
         return classTreeDoctors.iterator().asSequence().onEach {
             supers.add(it.javaClass.superclass.name)
         }.filter {
@@ -174,14 +182,13 @@ class ClassTreeSurgery : ClassByteSurgeryImpl<ClassTreeDoctor>() {
     }
 }
 
-@AutoService(ClassBytesSurgery::class)
 class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
     override fun loadDoctors(): MutableMap<String, ClassVisitorDoctor> {
-        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
         val classVisitorDoctors = ServiceLoader.load(ClassVisitorDoctor::class.java)
         if (!classVisitorDoctors.iterator().hasNext()) {
             return mutableMapOf()
         }
+        "👇👇👇👇👇 $tag : loadDoctors 👇👇👇👇👇".sout()
         //利用SPI 全称为 (Service Provider Interface) 查找 实现类
         val supers = mutableListOf<String>()
         return classVisitorDoctors.iterator().asSequence().onEach {
@@ -189,7 +196,7 @@ class ClassVisitorSurgery : ClassByteSurgeryImpl<ClassVisitorDoctor>() {
         }.filter {
             !supers.contains(it.javaClass.name)
         }.map {
-            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.superclass.simpleName}".sout()
+            " # $tag === ClassVisitorSurgery ==== ${it.javaClass.simpleName}".sout()
             it.className to it
         }.toMap().toMutableMap().also {
             "👆👆👆👆👆 $tag : loadDoctors 👆👆👆👆👆".sout()

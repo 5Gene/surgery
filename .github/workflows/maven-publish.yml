@@ -6,6 +6,9 @@ name: Maven Package
 on:
   release:
     types: [ published ]
+  push:
+    tags:
+      - 'v*'  # 仅在标签匹配 'v*' 模式时触发
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -20,7 +23,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 11
+    - name: 🐼 Set up JDK 18
       uses: actions/setup-java@v3
       with:
         java-version: '18'
@@ -28,22 +31,46 @@ jobs:
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      # Runs a single command using the runners shell
+    - name: 🔥 publishing surgery-helper
+      run: |
+        chmod +x gradlew
+        ./gradlew :surgery-helper:publishSurgeryPublicationToGithubPackagesRepository
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_USER: ${{ secrets.NAME_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
-    - run: echo "🎉 The job finish upload artifact succeed."
+      # Runs a single command using the runners shell
+    - name: 🔥 publishing surgery-api
+      run: |
+        chmod +x gradlew
+        ./gradlew :surgery-api:publishSurgeryPublicationToGithubPackagesRepository
+      env:
+        GITHUB_USER: ${{ secrets.NAME_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
-      #      https://github.com/ncipollo/release-action/blob/main/README.zh-Hans.md
-    - name: 🖥️ Release apk
-      uses: ncipollo/release-action@v1.5.0
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        artifacts: "app/build/outputs/apk/debug/*.apk"
-        allowUpdates: true
-        token: ${{ secrets.dev_secret }}
-    - run: echo "✨ ⭐ 🌟  The job finish release succeed. > ${{startsWith(github.ref, 'refs/tags/')}
+    - name: 🔥 publishing surgery-doctor-arouter
+      run: |
+        chmod +x gradlew
+        ./gradlew :surgery-doctor-arouter:publishSurgeryPublicationToGithubPackagesRepository
+      env:
+        GITHUB_USER: ${{ secrets.NAME_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+    - name: 🔥 publishing surgery-doctor-tryfinally
+      run: |
+        chmod +x gradlew
+        ./gradlew :surgery-doctor-tryfinally:publishSurgeryPublicationToGithubPackagesRepository
+      env:
+        GITHUB_USER: ${{ secrets.NAME_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+    - name: 🔥 publishing surgery-doctors
+      run: |
+        chmod +x gradlew
+        ./gradlew :surgery-doctors:publishSurgeryPublicationToGithubPackagesRepository
+      env:
+        GITHUB_USER: ${{ secrets.NAME_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+    - run: echo "🎉 The job finish publish all succeed."

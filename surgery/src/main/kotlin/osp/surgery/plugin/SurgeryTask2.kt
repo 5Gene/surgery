@@ -196,7 +196,7 @@ abstract class SurgeryTask2 : DefaultTask() {
                 action(index, jarEntry)
             }
         }
-        "$tag > jar handling $jarFile cost:${cost}ms".sout()
+        "$tag > jar handling ${jarFile.name} cost:${cost}ms".sout()
         outputChannel.send(Write(jarFile = jarFile))
     }
 

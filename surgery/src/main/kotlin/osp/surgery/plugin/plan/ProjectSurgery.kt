@@ -37,12 +37,10 @@ interface ProjectSurgery {
 }
 
 class ProjectSurgeryImpl : ProjectSurgery {
-    val classSurgeries = mutableListOf<ClassBytesSurgery>()
+    private val classSurgeries = mutableListOf<ClassBytesSurgery>()
     private val grandFinales: MutableList<GrandFinale<ClassBytesSurgery>> = mutableListOf<GrandFinale<ClassBytesSurgery>>()
 
     init {
-        //利用SPI 全称为 (Service Provider Interface) 查找IWizard的实现类
-//        val classBytesSurgeries = ServiceLoader.load(ClassBytesSurgery::class.java)
         val classBytesSurgeries = listOf(ClassTreeSurgery(), ClassVisitorSurgery())
         classBytesSurgeries.iterator().forEach {
             " # ${this.javaClass.simpleName} ==== ProjectSurgery ==== ${it.javaClass.name}".sout()

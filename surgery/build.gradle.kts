@@ -13,7 +13,7 @@ plugins {
 project.ext {
     set("GROUP_ID", "osp.sparkj.plugin")
     set("ARTIFACT_ID", "surgery")
-    set("VERSION", "2023.03.19")
+    set("VERSION", rootProject.version.toString())
 }
 
 //思路和booster一样 一个plugin一次文件复制，执行所有transform

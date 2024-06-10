@@ -56,3 +56,9 @@ fun String.isJar(): Boolean {
 fun Any.sout() {
     println("${Thread.currentThread().id} $ sparkj > $this")
 }
+
+val String.lookDown: String
+    get() = "👇👇👇👇👇👇👇👇👇👇👇👇👇👇👇 $this 👇👇👇👇👇👇👇👇👇👇👇👇👇👇👇"
+
+val String.lookup: String
+    get() = "👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆 $this 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆"

@@ -63,25 +63,17 @@ abstract class SurgeryTask : DefaultTask() {
         "$tag --------------------------------------------------------------------------------".sout()
 
         // we just copying classes fromjar files without modification
-        val jarCost = measureTimeMillis {
-            allInputJars.forEach { file ->
-                OperatingRoom.submit {
-                    reviewJarFile(file.asFile, jarOutput)
-                }
+        allInputJars.forEach { file ->
+            OperatingRoom.submit {
+                reviewJarFile(file.asFile, jarOutput)
             }
         }
-        println("$tag > jar handling cost:$jarCost")
-        // Iterating through class files from directories
-        // Looking for SomeSource.class to add generated interface and instrument with additional output in
-        // toString methods (in our case it's just System.out)
-        val dirCost = measureTimeMillis {
-            allInputDirs.forEach { directory ->
-                OperatingRoom.submit {
-                    reviewDirectory(directory, jarOutput)
-                }
+
+        allInputDirs.forEach { directory ->
+            OperatingRoom.submit {
+                reviewDirectory(directory, jarOutput)
             }
         }
-        println("$tag > dir handling cost:$dirCost")
 
         OperatingRoom.await()
 
@@ -116,7 +108,7 @@ abstract class SurgeryTask : DefaultTask() {
                 if (file.isFile) {
                     val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
                     val compileClassName = relativePath.replace(File.separatorChar, '/')
-                    println("$tag Adding from dir $relativePath")
+//                    println("$tag Adding from dir $relativePath")
                     when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, file.inputStream())) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                         is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
@@ -137,7 +129,7 @@ abstract class SurgeryTask : DefaultTask() {
                 { index: Int, jarEntry: JarEntry ->
                     val compileClassName = jarEntry.name
                     val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
-                    "$tag Adding from jar:$jarName > $compileClassName".sout()
+//                    "$tag Adding from jar:$jarName > $compileClassName".sout()
                     val inputJarStream = jarFile.getInputStream(jarEntry)
                     when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, inputJarStream)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
@@ -148,7 +140,7 @@ abstract class SurgeryTask : DefaultTask() {
             } else {
                 { _, jarEntry ->
                     val compileClassName = jarEntry.name
-                    "$tag Adding from jar:$jarName > $compileClassName".sout()
+//                    "$tag Adding from jar:$jarName > $compileClassName".sout()
                     jarOutput.writeEntity(jarEntry.name, jarFile.getInputStream(jarEntry))
                 }
             }
@@ -159,7 +151,7 @@ abstract class SurgeryTask : DefaultTask() {
                 action(index, jarEntry)
             }
         }
-        "$tag > jar handling $jarFile cost:$cost".sout()
+        "$tag > jar handling ${jarFile.name} cost:$cost".sout()
         jarFile.close()
     }
 

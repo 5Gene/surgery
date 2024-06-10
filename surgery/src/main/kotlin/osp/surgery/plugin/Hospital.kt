@@ -28,7 +28,7 @@ class Hospital : Plugin<Project> {
                 project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             // Registers a callback to be called, when a new variant is configured
             androidComponents.onVariants { variant ->
-                val taskProvider = project.tasks.register<SurgeryTask2>("Surgery${variant.name}Classes") {
+                val taskProvider = project.tasks.register<SurgeryTask>("Surgery${variant.name}Classes") {
                     tag = "🔥"
                 }
                 // Register modify classes task
@@ -36,9 +36,9 @@ class Hospital : Plugin<Project> {
                     .use(taskProvider)
                     .toTransform(
                         ScopedArtifact.CLASSES,
-                        SurgeryTask2::allJars,
-                        SurgeryTask2::allDirectories,
-                        SurgeryTask2::output
+                        SurgeryTask::allJars,
+                        SurgeryTask::allDirectories,
+                        SurgeryTask::output
                     )
             }
         }
