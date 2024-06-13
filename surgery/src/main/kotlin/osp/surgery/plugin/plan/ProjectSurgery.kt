@@ -36,20 +36,21 @@ interface ProjectSurgery {
     fun surgeryOver(): List<Pair<String, ByteArray>>?
 }
 
-class ProjectSurgeryImpl : ProjectSurgery {
+class ProjectSurgeryImpl(val logger: (String) -> Unit) : ProjectSurgery {
     private val classSurgeries = mutableListOf<ClassBytesSurgery>()
-    private val grandFinales: MutableList<GrandFinale<ClassBytesSurgery>> = mutableListOf<GrandFinale<ClassBytesSurgery>>()
+    private val grandFinales: MutableList<GrandFinale<ClassBytesSurgery>> = mutableListOf()
+    private val tag = javaClass.simpleName
 
     init {
         val classBytesSurgeries = listOf(ClassTreeSurgery(), ClassVisitorSurgery())
         classBytesSurgeries.iterator().forEach {
-            " # ${this.javaClass.simpleName} ==== ProjectSurgery ==== ${it.javaClass.name}".sout()
+            logger("${Thread.currentThread().id} $tag ==== ProjectSurgery ==== ${it.javaClass.name}")
             classSurgeries.add(it)
         }
     }
 
     override fun surgeryPrepare() {
-        " # ${this.javaClass.simpleName} ==== surgeryPrepare ==== ".sout()
+        logger("${Thread.currentThread().id} $tag ==== surgeryPrepare ==== ")
         grandFinales.clear()
         classSurgeries.forEach {
             it.surgeryPrepare()
@@ -57,31 +58,31 @@ class ProjectSurgeryImpl : ProjectSurgery {
     }
 
     override fun surgeryCheckJar(jarFile: File): Boolean {
-        //处理jar的时候
+        // 处理jar的时候
         // 对于jar里面的class
         // 可能有部分classMore要处理部分不处理部分以后处理  而且只有在遍历的时候才知道
         // 所以当classMore内部有要现在处理和以后处理的情况的时候 就遍历让现在处理的去处理
         if (classSurgeries.isEmpty()) {
-            " # ${this.javaClass.simpleName} ==== surgeryCheckJar classSurgeries is empty: ${jarFile.name} ==== ".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryCheckJar classSurgeries is empty: ${jarFile.name} ==== ")
             return false
         }
+        //0.jar里都是R.class, R$xxx.class
+        //源码依赖的模块,都是class.jar
         if (jarFile.skipJar()) {
-            " # ${this.javaClass.simpleName} ==== surgeryCheckJar skip jar: ${jarFile.name} ==== ".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryCheckJar skip jar: ${jarFile.name} ==== ")
             return false
         }
         val grouped = classSurgeries.groupBy {
             it.filterByJar(jarFile)
         }
-        val nowLastGroup = grouped[FilterAction.transformLast].orEmpty()
-        val nowGroup =
-            grouped[FilterAction.transformNow].orEmpty() + nowLastGroup
-        val lastGroup = grouped[FilterAction.transformLast] ?: emptyList<ClassBytesSurgery>()
+        val nowGroup = grouped[FilterAction.transformNow].orEmpty()
+        val lastGroup = grouped[FilterAction.transformLast].orEmpty()
 
         if (nowGroup.isNotEmpty() || lastGroup.isNotEmpty()) {
-            " # ${this.javaClass.simpleName} ==== surgeryCheckJar > ${jarFile.name} ==== ".sout()
+            "🔪.$tag ====  surgeryCheckJar > need surgery -> ${jarFile.name} $".sout()
             return true
         } else {
-            " # ${this.javaClass.simpleName} ==== surgeryCheckJar no transform > ${jarFile.name} ==== ".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryCheckJar no transform > ${jarFile.name} ==== ")
             //都不处理就直接复制jar
             return false
         }
@@ -93,11 +94,11 @@ class ProjectSurgeryImpl : ProjectSurgery {
         inputJarStream: InputStream
     ): SurgeryMeds? {
         if (classSurgeries.isEmpty()) {
-            " # ${this.javaClass.simpleName} ==== surgeryOnClass classSurgeries is empty: $fileName ==== ".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryOnClass classSurgeries is empty: $fileName ==== ")
             return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
         if (fileName.skipByFileName()) {
-            " # ${this.javaClass.simpleName} ==== surgeryOnClass > skip > class: $fileName".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryOnClass > skip > class: $fileName")
             return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
         //如果都不处理就直接复制文件就行了
@@ -107,19 +108,20 @@ class ProjectSurgeryImpl : ProjectSurgery {
         val lastGroup = grouped[FilterAction.transformLast].orEmpty()
         val nowGroup = grouped[FilterAction.transformNow].orEmpty()
         if (lastGroup.isNotEmpty()) {
-            " # ${this.javaClass.simpleName} ==== surgeryOnClass > grand finale > class: $fileName".sout()
+            "🔪.$tag ==== surgeryOnClass > grand finale > class: $fileName".sout()
             //只要有最后执行的就不执行 最后处理
             grandFinales.add(GrandFinale(fileName, compileClassName, inputJarStream.readBytes(), lastGroup + nowGroup))
             return null
         } else if (nowGroup.isNotEmpty()) {
             //如果现在要处理的不为空, 就现在处理
-            " # ${this.javaClass.simpleName} ==== surgeryOnClass > transform now > class: $fileName".sout()
+            "🔪.$tag ==== surgeryOnClass > transform now > class: $fileName > doctors size:${nowGroup.size}".sout()
             val bytes = inputJarStream.readBytes()
             return SurgeryMeds.Byte(compileClassName, nowGroup.fold(bytes) { acc, more ->
+                "🔪.$tag === ${more.javaClass.simpleName} -> surgeryOnClass > transform now > class: $fileName".sout()
                 more.surgery(fileName, acc)
             })
         }
-        " # ${this.javaClass.simpleName} ==== surgeryOnClass no transform > class: $fileName".sout()
+        logger("${Thread.currentThread().id} $tag ==== surgeryOnClass no transform > class: $fileName")
         //没有未来处理的也没有现在要处理的
         return SurgeryMeds.Stream(compileClassName, inputJarStream)
     }
@@ -129,21 +131,22 @@ class ProjectSurgeryImpl : ProjectSurgery {
             classSurgeries.forEach {
                 it.surgeryOver()
             }
-            " # ${this.javaClass.simpleName} ==== surgeryOver ==== ".sout()
+            logger("${Thread.currentThread().id} $tag ==== surgeryOver ==== ")
             return null
         }
         val jarBytes = mutableListOf<Pair<String, ByteArray>>()
         grandFinales.forEach {
-            " # ${this.javaClass.simpleName} ==== surgeryOver surgery:${it.compileClassName} ==== ".sout()
+            "$tag -> surgeryOver surgery now:${it.compileClassName} ==== ".sout()
             jarBytes.add(it.compileClassName to it.doctors.fold(it.classByteArray) { acc, more ->
+                "🔪.$tag == ${more.javaClass.simpleName} -> surgeryOver surgery now:${it.compileClassName} ==== ".sout()
                 more.surgery(it.fileName, acc)
             })
         }
-        " # ${this.javaClass.simpleName} ==== surgeryOver grandFinales:${grandFinales.size}==== ".sout()
+        logger("${Thread.currentThread().id} $tag ==== surgeryOver grandFinales:${grandFinales.size}==== ")
         classSurgeries.forEach {
             it.surgeryOver()
         }
-        " # ${this.javaClass.simpleName} ==== surgeryOver ==== ".sout()
+        logger("${Thread.currentThread().id} $tag ==== surgeryOver ==== ")
         return jarBytes
     }
 }

@@ -19,8 +19,11 @@ pluginManagement {
 dependencyResolutionManagement {
 //    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
         create("wings") {
-            from(files("gradle/wings.versions.toml"))
+            from(files("../gradle/wings.versions.toml"))
         }
     }
     repositories {
@@ -37,22 +40,5 @@ dependencyResolutionManagement {
             url = uri("$rootDir/repo")
         }
     }
-}
-rootProject.name = "surgery"
-
-def asm_test = false
-if (asm_test) {
-    include ':asm_example'
-} else {
-//includeBuild("surgery-api")
-    includeBuild("surgery")
-    include ':app'
-    include ':surgery-api'
-    include ':surgery-helper'
-//    include ':surgery-doctors'
-//    include ':surgery-doctor-arouter'
-//    include ':surgery-doctor-tryfinally'
-    include ':mylibrary'
-    include ':asm_example'
 }
 

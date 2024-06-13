@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
-import kotlin.system.measureTimeMillis
 
 @Suppress("ANNOTATION_TARGETS_NON_EXISTENT_ACCESSOR")
 abstract class SurgeryTask : DefaultTask() {
@@ -42,10 +41,14 @@ abstract class SurgeryTask : DefaultTask() {
     val jarPaths = mutableSetOf<String>()
 
     @get:Internal
-    private val surgery = ProjectSurgeryImpl()
+    abstract var tag: String
 
     @get:Internal
-    abstract var tag: String
+    private val surgery = ProjectSurgeryImpl(::info)
+
+    private fun info(msg: String) {
+        logger.info("$tag surgery-> $msg")
+    }
 
     @TaskAction
     fun taskAction() {
@@ -103,13 +106,16 @@ abstract class SurgeryTask : DefaultTask() {
     }
 
     private fun reviewDirectory(directory: Directory, jarOutput: JarOutputStream) {
-        val cost = measureTimeMillis {
-            directory.asFile.walk().forEach { file ->
-                if (file.isFile) {
-                    val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
-                    val compileClassName = relativePath.replace(File.separatorChar, '/')
-//                    println("$tag Adding from dir $relativePath")
-                    when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, file.inputStream())) {
+        val directoryFile = directory.asFile
+        println("$tag reviewDirectory > ${directoryFile.absolutePath}")
+        val directoryUri = directoryFile.toURI()
+        directoryFile.walk().forEach { file ->
+            if (file.isFile) {
+                val relativePath = directoryUri.relativize(file.toURI()).getPath()
+                val compileClassName = relativePath.replace(File.separatorChar, '/')
+                info("Adding from dir $relativePath")
+                file.inputStream().use {
+                    when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                         is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
                         null -> println("null")
@@ -117,41 +123,40 @@ abstract class SurgeryTask : DefaultTask() {
                 }
             }
         }
-        "$tag > dir handling ${directory.asFile.absolutePath} cost:$cost".sout()
     }
 
     private fun reviewJarFile(file: File, jarOutput: JarOutputStream) {
         val jarFile = JarFile(file)
-        val jarName = file.name
-        val cost = measureTimeMillis {
-            val surgeryOnJar = surgery.surgeryCheckJar(file)
-            val action: ((Int, JarEntry) -> Unit) = if (surgeryOnJar) {
-                { index: Int, jarEntry: JarEntry ->
-                    val compileClassName = jarEntry.name
-                    val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
-//                    "$tag Adding from jar:$jarName > $compileClassName".sout()
-                    val inputJarStream = jarFile.getInputStream(jarEntry)
-                    when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, inputJarStream)) {
+        println("$tag reviewJarFile > ${file.absolutePath}")
+        val surgeryOnJar = surgery.surgeryCheckJar(file)
+        val action: ((Int, JarEntry) -> Unit) = if (surgeryOnJar) {
+            { index: Int, jarEntry: JarEntry ->
+                val compileClassName = jarEntry.name
+                val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
+                info("Adding from jar:$compileClassName")
+                jarFile.getInputStream(jarEntry).use {
+                    when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                         is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
                         null -> println("null")
                     }
                 }
-            } else {
-                { _, jarEntry ->
-                    val compileClassName = jarEntry.name
-//                    "$tag Adding from jar:$jarName > $compileClassName".sout()
-                    jarOutput.writeEntity(jarEntry.name, jarFile.getInputStream(jarEntry))
-                }
             }
-            jarFile.entries().asSequence().forEachIndexed { index, jarEntry ->
-                if (jarEntry.isDirectory) {
-                    return@forEachIndexed
+        } else {
+            { _, jarEntry ->
+                val compileClassName = jarEntry.name
+                info("Adding from jar:$compileClassName")
+                jarFile.getInputStream(jarEntry).use {
+                    jarOutput.writeEntity(compileClassName, it)
                 }
-                action(index, jarEntry)
             }
         }
-        "$tag > jar handling ${jarFile.name} cost:$cost".sout()
+        jarFile.entries().asSequence().forEachIndexed { index, jarEntry ->
+            if (jarEntry.isDirectory) {
+                return@forEachIndexed
+            }
+            action(index, jarEntry)
+        }
         jarFile.close()
     }
 
@@ -183,5 +188,5 @@ abstract class SurgeryTask : DefaultTask() {
     }
 
     private fun printDuplicatedMessage(name: String) =
-        println("Cannot add ${name}, because output Jar already has file with the same name.")
+        info("Cannot add ${name}, because output Jar already has file with the same name.")
 }

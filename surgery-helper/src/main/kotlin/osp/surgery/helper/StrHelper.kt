@@ -14,6 +14,9 @@ fun String.log() {
 }
 
 fun String.isModuleJar(): Boolean {
+    //源码依赖的模块,都是class.jar, 无论依赖多少个模块,在app里都是class.jar
+    //具体路径为
+    //module_name\build\intermediates\runtime_library_classes_jar\debug\bundleLibRuntimeToJarDebug\classes.jar
     return this == "classes.jar"
 }
 
@@ -42,7 +45,7 @@ fun String.isBindingClass(): Boolean {
 }
 
 fun String.isRClass(): Boolean {
-    return startsWith("R$")||startsWith("R.")
+    return startsWith("R$") || startsWith("R.")
 }
 
 fun String.toPackageName(): String {

@@ -56,7 +56,9 @@ fun File.filterJar():Boolean{
  * 在遍历的时候过滤jar后续不处理
  */
 fun File.skipJar(): Boolean {
-    return this.name.equals("R.jar")
+    //0.jar里都是R.class, R$xxx.class, 0.jar只在app里先用variants.instrumentation.transformClassesWith执行transform才出现
+    //源码依赖的模块,都是class.jar
+    return this.name.equals("R.jar") || this.name == "0.jar"
 }
 
 fun File.packageName(srcDirectory: File): String {

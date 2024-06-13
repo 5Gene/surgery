@@ -92,10 +92,10 @@ open class TryFinallyVisitorDoctor : ClassVisitorDoctor() {
                 private val afterOriginalCode: Label = Label()
                 override fun visitCode() {
                     onMethodEnter(className, methodName, mv, this)
-                    mv.visitTryCatchBlock(
-                        beforeOriginalCode,
-                        afterOriginalCode,
-                        afterOriginalCodv.visitLabel(beforeOriginalCode)
+//                    mv.visitTryCatchBlock(
+//                        beforeOriginalCode,
+//                        afterOriginalCode,)
+//                        afterOriginalCodv.visitLabel(beforeOriginalCode)
                     super.visitCode()
                 }
 

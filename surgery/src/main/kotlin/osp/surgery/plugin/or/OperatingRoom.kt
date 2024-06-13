@@ -18,6 +18,7 @@ object OperatingRoom {
     private val features: MutableList<java.util.concurrent.Future<*>> = mutableListOf()
 
     fun submit(task: Runnable) {
+//        ManagementFactory.getThreadMXBean()
 //        task.run()
         val feature = workExecutor.submit(task)
         features.add(feature)

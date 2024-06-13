@@ -50,7 +50,7 @@ open class TryFinallyDoctor : ClassTreeDoctor(), MethodProcess {
     override fun surgery(classNode: ClassNode): ClassNode {
         classNode.methods.replaceAll { method ->
             try {
-                if (method.isMethodIgnore() || method.instructions == null) {
+                if (method.isMethodIgnore() || method.instructions == null || method.instructions.size() < 1 || method.maxLocals < 1) {
                     "$tag > skip method [Abstract] ${method.access} ${method.name}".sout()
                     method
                 } else {

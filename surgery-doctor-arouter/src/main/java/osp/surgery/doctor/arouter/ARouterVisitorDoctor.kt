@@ -17,8 +17,6 @@ import java.io.File
  * @since [https://github.com/5hmlA]
  * <p><a href="https://github.com/5hmlA">github</a>
  */
-
-
 @AutoService(ClassVisitorDoctor::class)
 class ARouterVisitorDoctor : ClassVisitorDoctor() {
     private val JTAG = "surgery"
@@ -96,7 +94,9 @@ class ARouterVisitorDoctor : ClassVisitorDoctor() {
                                     false
                                 )
                             }
-                            visitMethod.visitInsn(Opcodes.RETURN);
+                            visitMethod.visitInsn(Opcodes.RETURN)
+                            visitMethod.visitMaxs(1, 1)
+                            visitMethod.visitEnd()
                         }
                     }
                 }

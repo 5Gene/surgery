@@ -15,6 +15,13 @@ plugins {
 // ./gradlew transformDebugClassesWithAsm
 //apply<ExamplePlugin>()
 
+tasks.register("log") {
+    group = "surgery"
+    logger.info("info log")
+    logger.warn("warn log")
+    logger.error("error log")
+}
+
 android {
     namespace = "spark.surgery"
     defaultConfig {
@@ -80,5 +87,6 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     kapt("com.alibaba:arouter-compiler:1.5.2")
+    implementation(project(":mylibrary"))
 }
 

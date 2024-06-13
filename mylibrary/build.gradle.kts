@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-    alias(wings.plugins.android)
+    alias(wings.plugins.compose)
 }
 
 android {

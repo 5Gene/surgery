@@ -48,17 +48,22 @@ abstract class SurgeryTask2 : DefaultTask() {
     val jarPaths = mutableSetOf<String>()
 
     @get:Internal
-    private val surgery = ProjectSurgeryImpl()
+    abstract var tag: String
 
     @get:Internal
-    abstract var tag: String
+    private val surgery = ProjectSurgeryImpl(::info)
+
+    private fun info(msg: String) {
+        logger.info("$tag surgery-> $msg")
+    }
+
 
     inner class Write(val surgeryMeds: SurgeryMeds? = null, val jarFile: JarFile? = null)
 
     @TaskAction
     fun taskAction() {
         runBlocking {
-            println("$tag ===============================================================================")
+            "$tag ===============================================================================".sout()
             val nanoStartTime = System.nanoTime()
             surgery.surgeryPrepare()
 
@@ -75,11 +80,11 @@ abstract class SurgeryTask2 : DefaultTask() {
 
             val outputChannel = Channel<Write>()
             val outputJob = launch {
-                println("$tag 🍔--- outputChannel ready -----------------------------------------------------------------------------")
+                info("$tag 🍔--- outputChannel ready -----------------------------------------------------------------------------")
                 for (write in outputChannel) {
                     write.surgeryMeds?.let { surgeryMeds ->
                         val compileClassName = surgeryMeds.compileClassName
-                        println("$tag 🍔--- outputChannel write ---> $compileClassName")
+                        info("$tag 🍔--- outputChannel write ---> $compileClassName")
                         when (surgeryMeds) {
                             is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                             is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
@@ -88,7 +93,6 @@ abstract class SurgeryTask2 : DefaultTask() {
                     write.jarFile?.let {
                         it.close()
                     }
-
                 }
             }
 
@@ -97,28 +101,23 @@ abstract class SurgeryTask2 : DefaultTask() {
             val transformJobs = mutableListOf<Job>()
 
             // we just copying classes fromjar files without modification
-            val jarCost = measureTimeMillis {
-                allInputJars.forEach { file ->
-                    transformJobs.add(launch(transformDispatcher) {
-                        reviewJarFile(file.asFile, outputChannel)
-                    })
-                }
+            allInputJars.forEach { file ->
+                transformJobs.add(launch(transformDispatcher) {
+                    reviewJarFile(file.asFile, outputChannel)
+                })
             }
-            "$tag > jar handling cost:${jarCost}ms".sout()
+
             // Iterating through class files from directories
             // Looking for SomeSource.class to add generated interface and instrument with additional output in
             // toString methods (in our case it's just System.out)
-            val dirCost = measureTimeMillis {
-                allInputDirs.forEach { directory ->
-                    transformJobs.add(launch {
-                        val cost = measureTimeMillis {
-                            reviewDirectory(directory, outputChannel)
-                        }
-                        "$tag > dir handling ${directory.asFile.absolutePath} cost:${cost}ms".sout()
-                    })
-                }
+            allInputDirs.forEach { directory ->
+                transformJobs.add(launch {
+                    val cost = measureTimeMillis {
+                        reviewDirectory(directory, outputChannel)
+                    }
+                    "$tag > dir handling ${directory.asFile.absolutePath} cost:${cost}ms".sout()
+                })
             }
-            "$tag > dir handling cost:${dirCost}ms".sout()
 
             // Wait for all producers to finish
             transformJobs.joinAll()
@@ -139,18 +138,20 @@ abstract class SurgeryTask2 : DefaultTask() {
             jarOutput.close()
 
             val cost = System.nanoTime() - nanoStartTime
-            " # ${this@SurgeryTask2.javaClass.simpleName} == fileSize:${jarPaths.size} == cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}s".sout()
-            println("$tag ===============================================================================")
+            "$tag ${this@SurgeryTask2.javaClass.simpleName} == fileSize:${jarPaths.size} == cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}s".sout()
+            "$tag ===============================================================================".sout()
         }
     }
 
     private suspend fun reviewDirectory(directory: Directory, outputChannel: Channel<Write>) {
+        val directoryFile = directory.asFile
+        println("$tag reviewDirectory > ${directoryFile.absolutePath}")
+        val directoryUri = directoryFile.toURI()
         directory.asFile.walk().forEach { file ->
             if (file.isFile) {
-                val relativePath = directory.asFile.toURI().relativize(file.toURI()).getPath()
+                val relativePath = directoryUri.relativize(file.toURI()).getPath()
                 val compileClassName = relativePath.replace(File.separatorChar, '/')
-//                println("$tag Adding from dir ${file.name}")
-                println("$tag Adding from dir $relativePath")
+                info("$tag Adding from dir $relativePath")
                 surgery.surgeryOnClass(file.name, compileClassName, file.inputStream())?.let {
                     outputChannel.send(Write(it))
                 }
@@ -160,14 +161,14 @@ abstract class SurgeryTask2 : DefaultTask() {
 
     private suspend fun reviewJarFile(file: File, outputChannel: Channel<Write>) {
         val jarFile = JarFile(file)
+        println("$tag reviewJarFile > ${file.absolutePath}")
         val cost = measureTimeMillis {
             val surgeryOnJar = surgery.surgeryCheckJar(file)
             val action: suspend ((Int, JarEntry) -> Unit) = if (surgeryOnJar) {
                 { index: Int, jarEntry: JarEntry ->
                     val compileClassName = jarEntry.name
                     val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
-//                    println("$tag Adding from jar $fileName")
-                    println("$tag Adding from jar $compileClassName")
+                    info("$tag Adding from jar $compileClassName")
                     val inputJarStream = jarFile.getInputStream(jarEntry)
                     surgery.surgeryOnClass(fileName, compileClassName, inputJarStream)?.let {
                         outputChannel.send(Write(it))
@@ -185,7 +186,7 @@ abstract class SurgeryTask2 : DefaultTask() {
             } else {
                 { _, jarEntry ->
                     val compileClassName = jarEntry.name
-                    println("$tag Adding from jar $compileClassName")
+                    info("$tag Adding from jar $compileClassName")
                     outputChannel.send(Write(SurgeryMeds.Stream(jarEntry.name, jarFile.getInputStream(jarEntry))))
                 }
             }
@@ -196,7 +197,7 @@ abstract class SurgeryTask2 : DefaultTask() {
                 action(index, jarEntry)
             }
         }
-        "$tag > jar handling ${jarFile.name} cost:${cost}ms".sout()
+        info("$tag > jar handling ${jarFile.name} cost:${cost}ms")
         outputChannel.send(Write(jarFile = jarFile))
     }
 
@@ -227,5 +228,5 @@ abstract class SurgeryTask2 : DefaultTask() {
     }
 
     private fun printDuplicatedMessage(name: String) =
-        println("Cannot add ${name}, because output Jar already has file with the same name.")
+        info("Cannot add ${name}, because output Jar already has file with the same name.")
 }

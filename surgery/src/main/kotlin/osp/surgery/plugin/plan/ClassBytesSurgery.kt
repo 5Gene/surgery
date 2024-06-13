@@ -106,7 +106,9 @@ abstract class ClassByteSurgeryImpl<DOCTOR : ClassDoctor> : ClassBytesSurgery {
     abstract fun doSurgery(doctors: List<DOCTOR>, classFileByte: ByteArray): ByteArray
 
     override fun surgeryOver() {
-
+        if (doctors.isEmpty()) {
+            return
+        }
         "👇👇👇👇👇 $this surgeryOver 👇👇👇👇👇".sout()
         chiefDoctors.get()?.clear()
         doctors.forEach {
