@@ -3,9 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
-val rootDir = rootProject.rootDir.parentFile.absolutePath
-println(rootDir)
-
 //这里配置需要加载进buildSrc编译的代码方便调试
 sourceSets.main {
     java.srcDirs(

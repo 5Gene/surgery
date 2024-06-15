@@ -1,14 +1,8 @@
-
 plugins {
     id("java-gradle-plugin")
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.jvm)
 }
-
-//repositories {
-//    gradlePluginPortal()
-//    google()
-//}
 
 project.ext {
     set("GROUP_ID", "osp.sparkj.plugin")
@@ -16,7 +10,6 @@ project.ext {
     set("VERSION", rootProject.version.toString())
 }
 
-//思路和booster一样 一个plugin一次文件复制，执行所有transform
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
     ksp(wings.auto.service)
@@ -25,10 +18,6 @@ dependencies{
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.core.jvm)
     implementation("osp.sparkj.plugin:surgery-api:2024.06.06")
-
-//    api("osp.sparkj.plugin:surgery-api:2023.03.19")
-//    implementation(project(":surgery-api"))
-
     compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(gradleKotlinDsl())
     compileOnly(gradleApi())
