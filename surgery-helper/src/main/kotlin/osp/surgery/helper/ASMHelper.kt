@@ -1,10 +1,15 @@
 package osp.surgery.helper
 
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.T_BYTE
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import java.lang.reflect.Modifier
+import kotlin.reflect.KClass
 
 /**
  * @author yun.
@@ -233,7 +238,6 @@ fun isLambdaWithParamClick(methodName: String, descriptor: String, className: St
 fun isNormalClick(methodName: String, descriptor: String) = "onClick" == methodName &&
         descriptor == "(Landroid/view/View;)V"
 
-
 fun MethodNode.isMethodIgnore(): Boolean {
     return isEmptyBody() || access.isMethodIgnore()
 }
@@ -245,6 +249,7 @@ fun MethodNode.isEmptyBody(): Boolean {
 fun Int.isReturn(): Boolean {
     return (this <= Opcodes.RETURN && this >= Opcodes.IRETURN)
 }
+
 fun Int.isMethodExit(): Boolean {
     return isReturn() || this == Opcodes.ATHROW
 }
@@ -256,3 +261,282 @@ fun Int.isMethodInvoke(): Boolean {
 fun Int.isMethodIgnore(): Boolean {
     return Modifier.isAbstract(this) || Modifier.isNative(this) || Modifier.isInterface(this)
 }
+
+fun publicClass(
+    apiVersion: Int,
+    name: InternalName,
+    superName: InternalName? = null,
+    interfaces: List<InternalName>? = null,
+    classBody: ClassWriter.() -> Unit = {}
+) = beginPublicClass(apiVersion, name, superName, interfaces).run {
+    classBody()
+    endClass()
+}
+
+fun beginPublicClass(
+    apiVersion: Int,
+    name: InternalName,
+    superName: InternalName? = null,
+    interfaces: List<InternalName>? = null
+) = beginClass(apiVersion, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL, name, superName, interfaces)
+
+fun beginClass(
+    apiVersion: Int,
+    modifiers: Int,
+    name: InternalName,
+    superName: InternalName? = null,
+    interfaces: List<InternalName>? = null
+): ClassWriter = ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES).apply {
+    visit(
+        apiVersion,
+        modifiers,
+        name.value,
+        null,
+        (superName ?: InternalNameOf.javaLangObject).value,
+        interfaces?.map { it.value }?.toTypedArray()
+    )
+}
+
+fun ClassWriter.endClass(): ByteArray {
+    visitEnd()
+    return toByteArray()
+}
+
+fun ClassWriter.publicDefaultConstructor(superName: InternalName = InternalNameOf.javaLangObject) {
+    publicMethod("<init>", "()V") {
+        ALOAD(0)
+        INVOKESPECIAL(superName, "<init>", "()V")
+        RETURN()
+    }
+}
+
+fun ClassVisitor.publicStaticMethod(
+    name: String,
+    desc: String,
+    signature: String? = null,
+    exceptions: Array<String>? = null,
+    deprecated: Boolean = false,
+    methodBody: MethodVisitor.() -> Unit,
+    annotations: MethodVisitor.() -> Unit
+) {
+    method(
+        Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + if (deprecated) {
+            Opcodes.ACC_DEPRECATED
+        } else {
+            0
+        },
+        name, desc, signature, exceptions, annotations, methodBody
+    )
+}
+
+fun ClassVisitor.publicMethod(
+    name: String,
+    desc: String,
+    signature: String? = null,
+    exceptions: Array<String>? = null,
+    annotations: MethodVisitor.() -> Unit = {},
+    methodBody: MethodVisitor.() -> Unit
+) {
+    method(Opcodes.ACC_PUBLIC, name, desc, signature, exceptions, annotations, methodBody)
+}
+
+fun ClassVisitor.method(
+    access: Int,
+    name: String,
+    desc: String,
+    signature: String? = null,
+    exceptions: Array<String>? = null,
+    annotations: MethodVisitor.() -> Unit = {},
+    methodBody: MethodVisitor.() -> Unit
+) {
+    visitMethod(access, name, desc, signature, exceptions).apply {
+        annotations()
+        visitCode()
+        methodBody()
+        visitMaxs(0, 0)
+        visitEnd()
+    }
+}
+
+
+fun MethodVisitor.loadByteArray(byteArray: ByteArray) {
+    LDC(byteArray.size)
+    NEWARRAY(T_BYTE)
+    for ((i, byte) in byteArray.withIndex()) {
+        DUP()
+        LDC(i)
+        LDC(byte)
+        BASTORE()
+    }
+}
+
+
+fun MethodVisitor.ICONST_0() {
+    visitInsn(Opcodes.ICONST_0)
+}
+
+fun MethodVisitor.NEW(type: InternalName) {
+    visitTypeInsn(Opcodes.NEW, type)
+}
+
+fun MethodVisitor.visitTypeInsn(opcode: Int, type: InternalName) {
+    visitTypeInsn(opcode, type.value)
+}
+
+fun MethodVisitor.NEWARRAY(primitiveType: Int) {
+    visitIntInsn(Opcodes.NEWARRAY, primitiveType)
+}
+
+fun MethodVisitor.LDC(type: InternalName) {
+    visitLdcInsn(Type.getType("L${type.value};"))
+}
+
+fun MethodVisitor.LDC(value: Any) {
+    visitLdcInsn(value)
+}
+
+fun MethodVisitor.INVOKEVIRTUAL(owner: InternalName, name: String, desc: String, itf: Boolean = false) {
+    visitMethodInsn_(Opcodes.INVOKEVIRTUAL, owner, name, desc, itf)
+}
+
+fun MethodVisitor.INVOKESPECIAL(owner: InternalName, name: String, desc: String, itf: Boolean = false) {
+    visitMethodInsn_(Opcodes.INVOKESPECIAL, owner, name, desc, itf)
+}
+
+fun MethodVisitor.INVOKEINTERFACE(owner: InternalName, name: String, desc: String, itf: Boolean = true) {
+    visitMethodInsn_(Opcodes.INVOKEINTERFACE, owner, name, desc, itf)
+}
+
+fun MethodVisitor.INVOKESTATIC(owner: InternalName, name: String, desc: String) {
+    visitMethodInsn_(Opcodes.INVOKESTATIC, owner, name, desc, false)
+}
+
+private
+fun MethodVisitor.visitMethodInsn_(opcode: Int, owner: InternalName, name: String, desc: String, itf: Boolean) {
+    visitMethodInsn(opcode, owner.value, name, desc, itf)
+}
+
+fun MethodVisitor.BASTORE() {
+    visitInsn(Opcodes.BASTORE)
+}
+
+fun MethodVisitor.DUP() {
+    visitInsn(Opcodes.DUP)
+}
+
+fun MethodVisitor.POP() {
+    visitInsn(Opcodes.POP)
+}
+
+fun MethodVisitor.ARETURN() {
+    visitInsn(Opcodes.ARETURN)
+}
+
+fun MethodVisitor.RETURN() {
+    visitInsn(Opcodes.RETURN)
+}
+
+fun MethodVisitor.ALOAD(`var`: Int) {
+    visitVarInsn(Opcodes.ALOAD, `var`)
+}
+
+fun MethodVisitor.ASTORE(`var`: Int) {
+    visitVarInsn(Opcodes.ASTORE, `var`)
+}
+
+fun MethodVisitor.GOTO(label: Label) {
+    visitJumpInsn(Opcodes.GOTO, label)
+}
+
+inline fun <reified T> MethodVisitor.TRY_CATCH(
+    noinline tryBlock: MethodVisitor.() -> Unit,
+    noinline catchBlock: MethodVisitor.() -> Unit
+) =
+    TRY_CATCH(T::class.internalName, tryBlock, catchBlock)
+
+
+fun MethodVisitor.TRY_CATCH(
+    exceptionType: InternalName,
+    tryBlock: MethodVisitor.() -> Unit,
+    catchBlock: MethodVisitor.() -> Unit
+) {
+    val tryBlockStart = Label()
+    val tryBlockEnd = Label()
+    val catchBlockStart = Label()
+    val catchBlockEnd = Label()
+    visitTryCatchBlock(tryBlockStart, tryBlockEnd, catchBlockStart, exceptionType.value)
+
+    visitLabel(tryBlockStart)
+    tryBlock()
+    GOTO(catchBlockEnd)
+    visitLabel(tryBlockEnd)
+
+    visitLabel(catchBlockStart)
+    catchBlock()
+    visitLabel(catchBlockEnd)
+}
+
+fun <T : Enum<T>> MethodVisitor.GETSTATIC(field: T) {
+    val owner = field.declaringJavaClass.internalName
+    GETSTATIC(owner, field.name, "L$owner;")
+}
+
+//
+//fun MethodVisitor.GETSTATIC(field: KProperty<*>) {
+//    val owner = (field.owner as kotlin.jvm..ClassBasedDeclarationContainer).jClass.internalName
+//    GETSTATIC(owner, field.name, "L$owner;")
+//}
+
+fun MethodVisitor.GETSTATIC(owner: InternalName, name: String, desc: String) {
+    visitFieldInsn(Opcodes.GETSTATIC, owner.value, name, desc)
+}
+
+fun MethodVisitor.GETFIELD(owner: InternalName, name: String, desc: String) {
+    visitFieldInsn(Opcodes.GETFIELD, owner.value, name, desc)
+}
+
+fun MethodVisitor.PUTFIELD(owner: InternalName, name: String, desc: String) {
+    visitFieldInsn(Opcodes.PUTFIELD, owner.value, name, desc)
+}
+
+fun MethodVisitor.CHECKCAST(type: KClass<*>) {
+    CHECKCAST(type.internalName)
+}
+
+fun MethodVisitor.CHECKCAST(type: InternalName) {
+    visitTypeInsn(Opcodes.CHECKCAST, type)
+}
+
+fun MethodVisitor.ACONST_NULL() {
+    visitInsn(Opcodes.ACONST_NULL)
+}
+
+fun MethodVisitor.kotlinDeprecation(message: String) {
+    visitAnnotation("Lkotlin/Deprecated;", true).apply {
+        visit("message", message)
+        visitEnd()
+    }
+}
+
+/**
+ * A JVM  type name (as in `java/lang/Object` instead of `java.lang.Object`).
+ */
+@JvmInline
+value class InternalName(val value: String) {
+
+    companion object {
+        fun from(sourceName: String) = InternalName(sourceName.replace('.', '/'))
+    }
+
+    override fun toString() = value
+}
+
+object InternalNameOf {
+    val javaLangObject = InternalName("java/lang/Object")
+}
+
+val KClass<*>.internalName: InternalName
+    get() = java.internalName
+
+inline val Class<*>.internalName: InternalName
+    get() = InternalName(Type.getInternalName(this))
