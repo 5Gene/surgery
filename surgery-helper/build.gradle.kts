@@ -22,7 +22,7 @@ dependencies {
 }
 
 group = GroupIdMavenCentral
-version = libs.versions.surgery.helper
+version = libs.versions.surgery.helper.get()
 
 publishJavaMavenCentral("surgery-helper", true)
 
