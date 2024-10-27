@@ -1,3 +1,4 @@
+import june.wing.GroupIdMavenCentral
 import june.wing.publishJavaMavenCentral
 
 plugins {
@@ -11,7 +12,11 @@ buildscript {
 }
 
 dependencies{
-//    api("osp.sparkj.plugin:surgery-helper:2024.06.06")
+    api(libs.surgery.helper)
 }
+
+
+group = GroupIdMavenCentral
+version = libs.versions.surgery.api
 
 publishJavaMavenCentral("surgery-api", true)

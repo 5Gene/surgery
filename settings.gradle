@@ -36,7 +36,7 @@ if (asm_test) {
 //includeBuild("surgery-api")
 //    includeBuild("surgery")
 //    include ':app'
-//    include ':surgery-api'
+    include ':surgery-api'
     include ':surgery-helper'
 //    include ':surgery-doctors'
 //    include ':surgery-doctor-arouter'
