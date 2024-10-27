@@ -1,3 +1,4 @@
+import june.wing.GroupIdMavenCentral
 import june.wing.publishJavaMavenCentral
 
 plugins {
@@ -19,6 +20,9 @@ dependencies {
     api("org.ow2.asm:asm-tree:$asm")
     api("org.ow2.asm:asm-util:$asm")
 }
+
+group = GroupIdMavenCentral
+version = "0.1"
 
 publishJavaMavenCentral("surgery-helper", true)
 

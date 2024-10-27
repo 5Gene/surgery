@@ -5,8 +5,8 @@ surgery-helper = "0.1"
 surgery-api = "0.1"
 
 [libraries]
-#surgery-helper = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
-#surgery-api = { module = "junit:junit", version.ref = "junit" }
+surgery-helper = { module = "io.github.5gene:surgery-helper", version.ref = "surgery-helper" }
+surgery-api = { module = "io.github.5gene:surgery-api", version.ref = "surgery-api" }
 
 [bundles]
 [plugins]
