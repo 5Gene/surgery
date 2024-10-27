@@ -1,17 +1,8 @@
 plugins {
     id("com.android.library")
-    alias(wings.plugins.compose)
+    alias(vcl.plugins.gene.compose)
 }
 
 android {
     namespace = "com.example.mylibrary"
-}
-
-dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.google.material)
-    testImplementation(libs.test.junit)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.espresso.core)
 }

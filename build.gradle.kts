@@ -11,11 +11,11 @@
 version = "2024.06.06"
 
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.ksp) apply false
-    alias(libs.plugins.compose.compiler) apply false
-    alias(wings.plugins.android) apply false
-    alias(wings.plugins.compose) apply false
+    alias(vcl.plugins.android.application) apply false
+    alias(vcl.plugins.kotlin.android) apply false
+    alias(vcl.plugins.kotlin.jvm) apply false
+    alias(vcl.plugins.ksp) apply false
+    alias(vcl.plugins.compose.compiler) apply false
+    alias(vcl.plugins.gene.android) apply false
+    alias(vcl.plugins.gene.compose) apply false
 }

@@ -1,22 +1,16 @@
 plugins {
     id("java-gradle-plugin")
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlin.jvm)
-}
-
-project.ext {
-    set("GROUP_ID", "osp.sparkj.plugin")
-    set("ARTIFACT_ID", "surgery")
-    set("VERSION", rootProject.version.toString())
+    alias(vcl.plugins.ksp)
+    alias(vcl.plugins.kotlin.jvm)
 }
 
 //https://github.com/gradle/kotlin-dsl-samples
 dependencies{
-    ksp(wings.auto.service)
+    ksp(vcl.gene.auto.service)
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
-    implementation(libs.google.auto.service.anno)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.core.jvm)
+    implementation(vcl.google.auto.service.anno)
+    implementation(vcl.kotlinx.coroutines.core)
+    implementation(vcl.kotlinx.coroutines.core.jvm)
     implementation("osp.sparkj.plugin:surgery-api:2024.06.06")
     compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(gradleKotlinDsl())

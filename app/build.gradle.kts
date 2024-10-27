@@ -9,7 +9,7 @@ plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("kapt")
-    alias(wings.plugins.android)
+    alias(vcl.plugins.gene.android)
     id("surgery")
 }
 // ./gradlew transformDebugClassesWithAsm

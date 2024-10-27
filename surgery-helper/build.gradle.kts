@@ -1,15 +1,14 @@
+import june.wing.publishJavaMavenCentral
+
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(vcl.plugins.kotlin.jvm)
 }
 
-
-project.ext {
-    set("GROUP_ID", "osp.sparkj.plugin")
-    set("ARTIFACT_ID", "surgery-helper")
-    set("VERSION", rootProject.version.toString())
+buildscript {
+    dependencies {
+        classpath(vcl.gene.conventions)
+    }
 }
-
-apply(from = "../publish-plugin.gradle")
 
 dependencies {
     api("commons-io:commons-io:2.16.1")
@@ -20,3 +19,6 @@ dependencies {
     api("org.ow2.asm:asm-tree:$asm")
     api("org.ow2.asm:asm-util:$asm")
 }
+
+publishJavaMavenCentral("surgery-helper", true)
+
