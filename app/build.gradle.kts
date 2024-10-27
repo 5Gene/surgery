@@ -84,8 +84,8 @@ dependencies {
 //    implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
 //    implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
     implementation("com.alibaba:arouter-api:1.5.2")
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(vcl.androidx.navigation.fragment.ktx)
+    implementation(vcl.androidx.navigation.ui.ktx)
     kapt("com.alibaba:arouter-compiler:1.5.2")
     implementation(project(":mylibrary"))
 }

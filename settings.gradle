@@ -33,15 +33,15 @@ def asm_test = false
 if (asm_test) {
     include ':asm_example'
 } else {
-//includeBuild("surgery-api")
-//    includeBuild("surgery")
-//    include ':app'
+//    includeBuild("surgery-api")
+    includeBuild("surgery")
+    include ':app'
     include ':surgery-api'
     include ':surgery-helper'
-//    include ':surgery-doctors'
-//    include ':surgery-doctor-arouter'
-//    include ':surgery-doctor-tryfinally'
-//    include ':mylibrary'
-//    include ':asm_example'
+    include ':surgery-doctors'
+    include ':surgery-doctor-arouter'
+    include ':surgery-doctor-tryfinally'
+    include ':mylibrary'
+    include ':asm_example'
 }
 

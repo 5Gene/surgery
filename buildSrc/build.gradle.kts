@@ -1,40 +1,36 @@
 plugins {
-    id("java-gradle-plugin")
     alias(vcl.plugins.ksp)
     alias(vcl.plugins.kotlin.jvm)
 }
 
-//https://github.com/gradle/kotlin-dsl-samples
-dependencies{
+//这里配置需要加载进buildSrc编译的代码方便调试
+sourceSets.main {
+    java.srcDirs(
+//        """$rootDir\surgery-doctor-tryfinally\src\main\java""",
+//        """$rootDir\surgery-doctor-arouter\src\main\java"""
+    )
+}
+
+dependencies {
     ksp(vcl.gene.auto.service)
     // NOTE: It's important that you _don't_ use compileOnly here, as it will fail to resolve at compile-time otherwise
     implementation(vcl.google.auto.service.anno)
+
     implementation(vcl.kotlinx.coroutines.core)
     implementation(vcl.kotlinx.coroutines.core.jvm)
     implementation(libs.surgery.api)
+    implementation(libs.surgery.helper)
 
     compileOnly(gradleApi())
     compileOnly("com.android.tools.build:gradle-api:${vcl.versions.android.gradle.plugin.get()}")
     compileOnly(gradleKotlinDsl())
     compileOnly(kotlin("gradle-plugin", vcl.versions.kotlin.get()))
     compileOnly(kotlin("gradle-plugin-api", vcl.versions.kotlin.get()))
-
-}
-
-//定义插件  就不需要 resources/META-INF/gradle-plugins/*.properties文件了
-gradlePlugin {
-    plugins {
-        create("surgery") {
-            id = "surgery"
-            implementationClass = "osp.surgery.plugin.Hospital"
-            displayName = "${id}.gradle.plugin"
-            description = project.description ?: project.name
-        }
-    }
 }
 
 //https://github.com/tschuchortdev/kotlin-compile-testing
 //https://bnorm.medium.com/exploring-kotlin-ir-bed8df167c23
+//https://github.com/Leifzhang/GradleSample.git
 
 //完成以下功能
 //https://github.com/zhuguohui/MehodInterceptor
