@@ -19,7 +19,7 @@ import java.io.File
 
 @AutoService(ClassTreeDoctor::class)
 class ARouterTreeDoctor : ClassTreeDoctor() {
-    private val JTAG = "surgery"
+
     private val loadRouterMap = "loadRouterMap"
     private val arouterFilePrefix = "ARouter$$"
     private val logisticsCenterClass = "LogisticsCenter.class"
@@ -52,7 +52,7 @@ class ARouterTreeDoctor : ClassTreeDoctor() {
     override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         if (fileName.startsWith(arouterFilePrefix)) {
             val router = compileClassName.className()
-            " # $tag .. keep $router  from  $fileName".sout()
+            " # $tag .. keep > $router  from  $fileName".sout()
             if (routesClassNames.add(router)) {
                 isIncrementalRoutesClassNames.add(router)
             }
@@ -64,7 +64,7 @@ class ARouterTreeDoctor : ClassTreeDoctor() {
     }
 
     override fun surgery(classNode: ClassNode): ClassNode {
-        if (isIncrementalRoutesClassNames.size == 0) {
+        if (isIncrementalRoutesClassNames.isEmpty()) {
             " # $tag ====== surgery router size: 0 ======".sout()
             return classNode
         }
@@ -73,7 +73,7 @@ class ARouterTreeDoctor : ClassTreeDoctor() {
             it.name.equals(loadRouterMap)
         }?.instructions?.let { insn ->
             insn.findAll(Opcodes.RETURN, Opcodes.ATHROW).forEach { ret ->
-                insn.insertLogCodeBefore(ret, "e", JTAG, "$logisitscCenter --> visitInsn")
+                insn.insertLogCodeBefore(ret, "e", tag, "$logisitscCenter --> visitInsn")
 //                insn.insertBefore(ret, LdcInsnNode("Surgery"))
 //                insn.insertBefore(ret, LdcInsnNode("$logisitscCenter --> visitInsn"))
 //                insn.insertBefore(ret, MethodInsnNode(Opcodes.INVOKESTATIC, "android/util/Log", "i", "(Ljava/lang/String;Ljava/lang/String;)I", false))

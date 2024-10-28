@@ -19,7 +19,7 @@ import java.io.File
  */
 @AutoService(ClassVisitorDoctor::class)
 class ARouterVisitorDoctor : ClassVisitorDoctor() {
-    private val JTAG = "surgery"
+
     private val loadRouterMap = "loadRouterMap"
     private val arouterFilePrefix = "ARouter$$"
     private val logisticsCenterClass = "LogisticsCenter.class"
@@ -52,7 +52,7 @@ class ARouterVisitorDoctor : ClassVisitorDoctor() {
     override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         if (fileName.startsWith(arouterFilePrefix)) {
             val router = compileClassName.className()
-            " # $tag .. keep $router  from  $fileName".sout()
+            " # $tag .. keep > $router  from  $fileName".sout()
             if (routesClassNames.add(router)) {
                 isIncrementalRoutesClassNames.add(router)
             }

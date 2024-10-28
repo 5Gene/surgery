@@ -55,6 +55,7 @@ abstract class SurgeryTask2 : DefaultTask() {
 
     private fun info(msg: String) {
         logger.info("$tag surgery-> $msg")
+        println("$tag surgery-> $msg")
     }
 
 

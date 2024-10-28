@@ -51,7 +51,7 @@ class ArouteDoctor : ClassTreeDoctor() {
     override fun filterByClassName(fileName: String, compileClassName: String): FilterAction {
         if (fileName.startsWith(arouterFilePrefix)) {
             val router = compileClassName.className()
-            " # $tag .. keep $router  from  $compileClassName".sout()
+            " # $tag .. keep > $router  from  $compileClassName".sout()
             if (routesClassNames.add(router)) {
                 isIncrementalRoutesClassNames.add(router)
             }

@@ -48,6 +48,7 @@ abstract class SurgeryTask : DefaultTask() {
 
     private fun info(msg: String) {
         logger.info("$tag surgery-> $msg")
+        println("$tag surgery-> $msg")
     }
 
     @TaskAction
@@ -111,9 +112,9 @@ abstract class SurgeryTask : DefaultTask() {
         val directoryUri = directoryFile.toURI()
         directoryFile.walk().forEach { file ->
             if (file.isFile) {
-                val relativePath = directoryUri.relativize(file.toURI()).getPath()
+                val relativePath = directoryUri.relativize(file.toURI()).path
                 val compileClassName = relativePath.replace(File.separatorChar, '/')
-                info("Adding from dir $relativePath")
+                info("reviewClass from Dir: $relativePath")
                 file.inputStream().use {
                     when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
@@ -133,7 +134,7 @@ abstract class SurgeryTask : DefaultTask() {
             { index: Int, jarEntry: JarEntry ->
                 val compileClassName = jarEntry.name
                 val fileName = compileClassName.substring(compileClassName.lastIndexOf('/') + 1)
-                info("Adding from jar:$compileClassName")
+                println("reviewClass from Jar: $compileClassName")
                 jarFile.getInputStream(jarEntry).use {
                     when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
@@ -145,7 +146,7 @@ abstract class SurgeryTask : DefaultTask() {
         } else {
             { _, jarEntry ->
                 val compileClassName = jarEntry.name
-                info("Adding from jar:$compileClassName")
+                logger.debug("ignore from jar:$compileClassName")
                 jarFile.getInputStream(jarEntry).use {
                     jarOutput.writeEntity(compileClassName, it)
                 }
@@ -188,5 +189,5 @@ abstract class SurgeryTask : DefaultTask() {
     }
 
     private fun printDuplicatedMessage(name: String) =
-        info("Cannot add ${name}, because output Jar already has file with the same name.")
+        logger.debug("Cannot add ${name}, because output Jar already has file with the same name.")
 }

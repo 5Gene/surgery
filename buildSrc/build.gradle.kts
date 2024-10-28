@@ -6,8 +6,8 @@ plugins {
 //这里配置需要加载进buildSrc编译的代码方便调试
 sourceSets.main {
     java.srcDirs(
-//        """$rootDir\surgery-doctor-tryfinally\src\main\java""",
-//        """$rootDir\surgery-doctor-arouter\src\main\java"""
+//        """..\surgery-doctor-tryfinally\src\main\java""",
+        """..\surgery-doctor-arouter\src\main\java"""
     )
 }
 
