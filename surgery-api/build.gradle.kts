@@ -17,6 +17,6 @@ dependencies{
 
 
 group = GroupIdMavenCentral
-version = libs.versions.surgery.api.get()
+version = "24.10.29"
 
 publishJavaMavenCentral("surgery-api", true)
