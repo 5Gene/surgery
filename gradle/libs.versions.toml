@@ -1,7 +1,7 @@
 #https://github.com/terrakok/kmp-awesome
 
 [versions]
-surgery-helper = "24.10.29"
+surgery-helper = "0.1"
 surgery-api = "0.1"
 surgery-doctor-arouter = "24.10.29"
 surgery-doctor-tryfinally = "24.10.29"
