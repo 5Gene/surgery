@@ -7,7 +7,7 @@ plugins {
 sourceSets.main {
     java.srcDirs(
 //        """..\surgery-doctor-tryfinally\src\main\java""",
-        """..\surgery-doctor-arouter\src\main\java"""
+//        """..\surgery-doctor-arouter\src\main\java"""
     )
 }
 
