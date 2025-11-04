@@ -26,8 +26,8 @@ dependencies {
     compileOnly(gradleApi())
     compileOnly("com.android.tools.build:gradle-api:${vcl.versions.android.gradle.plugin.get()}")
     compileOnly(gradleKotlinDsl())
-    compileOnly(kotlin("gradle-plugin", vcl.versions.kotlin.get()))
-    compileOnly(kotlin("gradle-plugin-api", vcl.versions.kotlin.get()))
+    compileOnly(kotlin("gradle-plugin", vcl.versions.kotlin.asProvider().get()))
+    compileOnly(kotlin("gradle-plugin-api", vcl.versions.kotlin.asProvider().get()))
 }
 
 //https://github.com/tschuchortdev/kotlin-compile-testing
