@@ -16,6 +16,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import osp.surgery.helper.sout
+import osp.surgery.helper.SurgeryConfig
 import osp.surgery.plugin.or.OperatingRoom
 import osp.surgery.plugin.plan.ProjectSurgeryImpl
 import osp.surgery.plugin.plan.SurgeryMeds
@@ -23,6 +24,7 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.jar.JarEntry
@@ -44,8 +46,9 @@ abstract class SurgeryTask2 : DefaultTask() {
     @get:OutputFile
     abstract val output: RegularFileProperty
 
+    // 使用并发集合，避免synchronized性能瓶颈
     @Internal
-    val jarPaths = mutableSetOf<String>()
+    val jarPaths = ConcurrentHashMap.newKeySet<String>()
 
     @get:Internal
     abstract var tag: String
@@ -72,7 +75,9 @@ abstract class SurgeryTask2 : DefaultTask() {
             val outputFile = output.get().asFile
             val allInputJars = allJars.get()
             val allInputDirs = allDirectories.get()
-            val jarOutput = JarOutputStream(BufferedOutputStream(FileOutputStream(outputFile)))
+            val jarOutput = JarOutputStream(
+                BufferedOutputStream(FileOutputStream(outputFile), SurgeryConfig.BUFFER_SIZE)
+            )
 
             "$tag > input:jars size: ${allInputJars.size}".sout()
             "$tag > input:dirs size: ${allInputDirs.size}".sout()
@@ -204,28 +209,27 @@ abstract class SurgeryTask2 : DefaultTask() {
 
 
     // writeEntity methods check if the file has name that already exists in output jar
+    // 使用并发集合，无需同步
     private fun JarOutputStream.writeByte(name: String, entryByte: ByteArray) {
         // check for duplication name first
-        if (jarPaths.contains(name)) {
+        if (!jarPaths.add(name)) {
             printDuplicatedMessage(name)
-        } else {
-            putNextEntry(JarEntry(name))
-            write(entryByte)
-            closeEntry()
-            jarPaths.add(name)
+            return
         }
+        putNextEntry(JarEntry(name))
+        write(entryByte)
+        closeEntry()
     }
 
     private fun JarOutputStream.writeEntity(name: String, inputStream: InputStream) {
         // check for duplication name first
-        if (jarPaths.contains(name)) {
+        if (!jarPaths.add(name)) {
             printDuplicatedMessage(name)
-        } else {
-            putNextEntry(JarEntry(name))
-            inputStream.copyTo(this)
-            closeEntry()
-            jarPaths.add(name)
+            return
         }
+        putNextEntry(JarEntry(name))
+        inputStream.copyTo(this)
+        closeEntry()
     }
 
     private fun printDuplicatedMessage(name: String) =

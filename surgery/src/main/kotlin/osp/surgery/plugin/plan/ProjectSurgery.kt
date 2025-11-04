@@ -3,6 +3,7 @@ package osp.surgery.plugin.plan
 import osp.surgery.api.ClassBytesSurgery
 import osp.surgery.api.FilterAction
 import osp.surgery.helper.*
+import osp.surgery.plugin.plan.filterDoctors
 import java.io.File
 import java.io.InputStream
 import java.util.*
@@ -68,17 +69,15 @@ class ProjectSurgeryImpl(val logger: (String) -> Unit) : ProjectSurgery {
         }
         //0.jar里都是R.class, R$xxx.class
         //源码依赖的模块,都是class.jar
-        if (jarFile.skipJar()) {
+        if (SurgeryConfig.shouldSkipJar(jarFile.name)) {
             logger("${Thread.currentThread().id} $tag ==== surgeryCheckJar skip jar: ${jarFile.name} ==== ")
             return false
         }
-        val grouped = classSurgeries.groupBy {
+        val result = filterDoctors(classSurgeries) {
             it.filterByJar(jarFile)
         }
-        val nowGroup = grouped[FilterAction.transformNow].orEmpty()
-        val lastGroup = grouped[FilterAction.transformLast].orEmpty()
 
-        if (nowGroup.isNotEmpty() || lastGroup.isNotEmpty()) {
+        if (result.hasTransform) {
             "🔪.$tag ====  surgeryCheckJar > need surgery -> ${jarFile.name} $".sout()
             return true
         } else {
@@ -97,33 +96,34 @@ class ProjectSurgeryImpl(val logger: (String) -> Unit) : ProjectSurgery {
             logger("${Thread.currentThread().id} $tag ==== surgeryOnClass classSurgeries is empty: $fileName ==== ")
             return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
-        if (fileName.skipByFileName()) {
+        if (SurgeryConfig.shouldSkipClass(fileName)) {
             logger("${Thread.currentThread().id} $tag ==== surgeryOnClass > skip > class: $fileName")
             return SurgeryMeds.Stream(compileClassName, inputJarStream)
         }
         //如果都不处理就直接复制文件就行了
-        val grouped = classSurgeries.groupBy {
+        // 优化：只读取一次字节码，避免重复I/O
+        val bytes = inputJarStream.readBytes()
+        val result = filterDoctors(classSurgeries) {
             it.filterByClassName(fileName, compileClassName)
         }
-        val lastGroup = grouped[FilterAction.transformLast].orEmpty()
-        val nowGroup = grouped[FilterAction.transformNow].orEmpty()
-        if (lastGroup.isNotEmpty()) {
+        if (result.last.isNotEmpty()) {
             "🔪.$tag ==== surgeryOnClass > grand finale > class: $fileName".sout()
             //只要有最后执行的就不执行 最后处理
-            grandFinales.add(GrandFinale(fileName, compileClassName, inputJarStream.readBytes(), lastGroup + nowGroup))
+            grandFinales.add(GrandFinale(fileName, compileClassName, bytes, result.allTransform))
             return null
-        } else if (nowGroup.isNotEmpty()) {
+        } else if (result.now.isNotEmpty()) {
             //如果现在要处理的不为空, 就现在处理
-            "🔪.$tag ==== surgeryOnClass > transform now > class: $fileName > doctors size:${nowGroup.size}".sout()
-            val bytes = inputJarStream.readBytes()
-            return SurgeryMeds.Byte(compileClassName, nowGroup.fold(bytes) { acc, more ->
+            "🔪.$tag ==== surgeryOnClass > transform now > class: $fileName > doctors size:${result.now.size}".sout()
+            val transformedBytes = result.now.fold(bytes) { acc, more ->
                 "🔪.$tag === ${more.javaClass.simpleName} -> surgeryOnClass > transform now > class: $fileName".sout()
                 more.surgery(fileName, acc)
-            })
+            }
+            return SurgeryMeds.Byte(compileClassName, transformedBytes)
         }
         logger("${Thread.currentThread().id} $tag ==== surgeryOnClass no transform > class: $fileName")
         //没有未来处理的也没有现在要处理的
-        return SurgeryMeds.Stream(compileClassName, inputJarStream)
+        // 注意：如果已经读取了bytes，需要创建新的InputStream
+        return SurgeryMeds.Byte(compileClassName, bytes)
     }
 
     override fun surgeryOver(): List<Pair<String, ByteArray>>? {

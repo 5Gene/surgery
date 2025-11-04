@@ -17,48 +17,19 @@ import java.util.zip.ZipEntry
  * <p><a href="https://github.com/5hmlA">github</a>
  */
 
-fun File.filterJar():Boolean{
-    return name.startsWith("jetified-")
-            ||name.startsWith("core-")
-            ||name.startsWith("drawerlayout-")
-            ||name.startsWith("vectordrawable-")
-            ||name.startsWith("dynamicanimation-")
-            ||name.startsWith("localbroadcastmanager-")
-            ||name.startsWith("navigation-")
-            ||name.startsWith("viewpager-")
-            ||name.startsWith("coordinatorlayout-")
-            ||name.startsWith("legacy-")
-            ||name.startsWith("loader-")
-            ||name.startsWith("customview-")
-            ||name.startsWith("recyclerview-")
-            ||name.startsWith("recyclerview-")
-            ||name.startsWith("swiperefreshlayout-")
-            ||name.startsWith("transition-")
-            ||name.startsWith("cardview-")
-            ||name.startsWith("slidingpanelayout-")
-            ||name.startsWith("versionedparcelable-")
-            ||name.startsWith("constraintlayout-")
-            ||name.startsWith("material-")
-            ||name.startsWith("appcompat-")
-            ||name.startsWith("annotation-")
-            ||name.startsWith("lifecycle-")
-            ||name.startsWith("print-")
-            ||name.startsWith("collection-")
-            ||name.startsWith("cursoradapter-")
-            ||name.startsWith("media-")
-            ||name.startsWith("asynclayoutinflater-")
-            ||name.startsWith("fragment-")
-            ||name.startsWith("interpolator-")
+@Deprecated("Use SurgeryConfig.shouldSkipJar() instead", ReplaceWith("SurgeryConfig.shouldSkipJar(this.name)"))
+fun File.filterJar(): Boolean {
+    return SurgeryConfig.shouldSkipJar(this.name)
 }
 
 /**
  * review之前过滤
  * 在遍历的时候过滤jar后续不处理
+ * 0.jar里都是R.class, R$xxx.class, 0.jar只在app里先用variants.instrumentation.transformClassesWith执行transform才出现
+ * 源码依赖的模块,都是class.jar
  */
 fun File.skipJar(): Boolean {
-    //0.jar里都是R.class, R$xxx.class, 0.jar只在app里先用variants.instrumentation.transformClassesWith执行transform才出现
-    //源码依赖的模块,都是class.jar
-    return this.name.equals("R.jar") || this.name == "0.jar"
+    return SurgeryConfig.shouldSkipJar(this.name)
 }
 
 fun File.packageName(srcDirectory: File): String {
@@ -67,7 +38,7 @@ fun File.packageName(srcDirectory: File): String {
 }
 
 fun File.isModuleJar(): Boolean {
-    return name.isModuleJar()
+    return SurgeryConfig.isModuleJar(this.name)
 }
 
 /**
@@ -75,7 +46,7 @@ fun File.isModuleJar(): Boolean {
  * 在遍历的时候过滤class后续不处理
  */
 fun File.skipFile(): Boolean {
-    return name.skipByFileName()
+    return SurgeryConfig.shouldSkipClass(this.name)
 }
 
 fun File.className(parent: File?): String {

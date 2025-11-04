@@ -32,11 +32,6 @@ class Hospital : Plugin<Project> {
             val androidComponents =
                 project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             // Registers a callback to be called, when a new variant is configured
-
-            //./gradlew SurgeryDebugClassesWithAsm --info
-            //"hello".capitalize()//把第一个字符转为大写
-            //uppercase() 将整个字符串的所有字母都转成大写
-            //titlecase() 主要用于单字符的转换，并且其行为在不同语言环境下可能有所不同（例如，对于有些特殊语言字符，titlecase 可能不是简单的大写）
             androidComponents.onVariants { variant ->
                 val taskProvider = project.tasks.register<SurgeryTask>("Surgery${variant.name.replaceFirstChar { it.uppercase() }}ClassesWithAsm") {
                     group = "surgery"
@@ -58,17 +53,6 @@ class Hospital : Plugin<Project> {
         if (taskReauests.size > 0) {
             val args = taskReauests[0].args.filter { !it.equals("clean") }
             "args : $args ".sout()
-            if (args.isNotEmpty()) {
-//                val predicate: (String) -> Boolean = { it.toLowerCase().contains("release") }
-//                if (args.any(predicate)) {
-//                }
-//                val android = project.extensions.findByType<com.android.build.gradle.BaseExtension>()
-//                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
-//                val android = project.extensions.findByType(ApplicationAndroidComponentsExtension::class.java)
-//                println(project.extensions.findByName("android"))
-//                "project name: ${project.name}  $android  ${android?.transforms}".sout()
-//                android?.registerTransform(Surgery(project))
-            }
         }
     }
 }

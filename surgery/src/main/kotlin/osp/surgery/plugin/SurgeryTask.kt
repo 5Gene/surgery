@@ -10,6 +10,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import osp.surgery.helper.sout
+import osp.surgery.helper.SurgeryConfig
 import osp.surgery.plugin.or.OperatingRoom
 import osp.surgery.plugin.plan.ProjectSurgeryImpl
 import osp.surgery.plugin.plan.SurgeryMeds
@@ -17,6 +18,7 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -37,8 +39,9 @@ abstract class SurgeryTask : DefaultTask() {
     @get:OutputFile
     abstract val output: RegularFileProperty
 
+    // 使用并发集合，避免synchronized性能瓶颈
     @Internal
-    val jarPaths = mutableSetOf<String>()
+    val jarPaths = ConcurrentHashMap.newKeySet<String>()
 
     @get:Internal
     abstract var tag: String
@@ -60,7 +63,9 @@ abstract class SurgeryTask : DefaultTask() {
         val outputFile = output.get().asFile
         val allInputJars = allJars.get()
         val allInputDirs = allDirectories.get()
-        val jarOutput = JarOutputStream(BufferedOutputStream(FileOutputStream(outputFile)))
+        val jarOutput = JarOutputStream(
+            BufferedOutputStream(FileOutputStream(outputFile), SurgeryConfig.BUFFER_SIZE)
+        )
         "$tag > input:jars size: ${allInputJars.size}".sout()
         "$tag > input:dirs size: ${allInputDirs.size}".sout()
         "$tag > output:file: $outputFile".sout()
@@ -90,19 +95,8 @@ abstract class SurgeryTask : DefaultTask() {
         jarOutput.close()
 
         val cost = System.nanoTime() - nanoStartTime
-
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3602314700 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3989413300 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3471204800 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3619522800 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:6445464700 > 6
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3937048500 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3937048500 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3552026000 > 3
-        //# SurgeryTask_Decorated == fileSize:21850 cost:5152306700 > 5
-        //# SurgeryTask_Decorated == fileSize:21850 cost:4740725500 > 4
-        //# SurgeryTask_Decorated == fileSize:21850 cost:3859330200 > 3
-        " # ${this.javaClass.simpleName} == fileSize:${jarPaths.size} cost:$cost > ${TimeUnit.NANOSECONDS.toSeconds(cost)}".sout()
+        val seconds = TimeUnit.NANOSECONDS.toSeconds(cost)
+        " # ${this.javaClass.simpleName} == fileSize:${jarPaths.size} cost:$cost > ${seconds}s".sout()
         println("$tag ===============================================================================")
     }
 
@@ -119,7 +113,9 @@ abstract class SurgeryTask : DefaultTask() {
                     when (val surgeryMeds = surgery.surgeryOnClass(file.name, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                         is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
-                        null -> println("null")
+                        null -> {
+                            // null表示需要最后处理，跳过
+                        }
                     }
                 }
             }
@@ -139,7 +135,9 @@ abstract class SurgeryTask : DefaultTask() {
                     when (val surgeryMeds = surgery.surgeryOnClass(fileName, compileClassName, it)) {
                         is SurgeryMeds.Byte -> jarOutput.writeByte(compileClassName, surgeryMeds.value)
                         is SurgeryMeds.Stream -> jarOutput.writeEntity(compileClassName, surgeryMeds.value)
-                        null -> println("null")
+                        null -> {
+                            // null表示需要最后处理，跳过
+                        }
                     }
                 }
             }
@@ -162,30 +160,27 @@ abstract class SurgeryTask : DefaultTask() {
     }
 
     // writeEntity methods check if the file has name that already exists in output jar
-    @Synchronized
+    // 使用并发集合，移除@Synchronized，提高性能
     private fun JarOutputStream.writeByte(name: String, entryByte: ByteArray) {
         // check for duplication name first
-        if (jarPaths.contains(name)) {
+        if (!jarPaths.add(name)) {
             printDuplicatedMessage(name)
-        } else {
-            putNextEntry(JarEntry(name))
-            write(entryByte)
-            closeEntry()
-            jarPaths.add(name)
+            return
         }
+        putNextEntry(JarEntry(name))
+        write(entryByte)
+        closeEntry()
     }
 
-    @Synchronized
     private fun JarOutputStream.writeEntity(name: String, inputStream: InputStream) {
         // check for duplication name first
-        if (jarPaths.contains(name)) {
+        if (!jarPaths.add(name)) {
             printDuplicatedMessage(name)
-        } else {
-            putNextEntry(JarEntry(name))
-            inputStream.copyTo(this)
-            closeEntry()
-            jarPaths.add(name)
+            return
         }
+        putNextEntry(JarEntry(name))
+        inputStream.copyTo(this)
+        closeEntry()
     }
 
     private fun printDuplicatedMessage(name: String) =

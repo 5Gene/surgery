@@ -13,19 +13,18 @@ fun String.log() {
     println("${Thread.currentThread().id} $ sparkj > $this")
 }
 
+@Deprecated("Use SurgeryConfig.isModuleJar() instead", ReplaceWith("SurgeryConfig.isModuleJar(this)"))
 fun String.isModuleJar(): Boolean {
-    //源码依赖的模块,都是class.jar, 无论依赖多少个模块,在app里都是class.jar
-    //具体路径为
-    //module_name\build\intermediates\runtime_library_classes_jar\debug\bundleLibRuntimeToJarDebug\classes.jar
-    return this == "classes.jar"
+    return SurgeryConfig.isModuleJar(this)
 }
 
 
 /**
  * review的时候过滤
  */
+@Deprecated("Use SurgeryConfig.shouldSkipClass() instead", ReplaceWith("SurgeryConfig.shouldSkipClass(this)"))
 fun String.skipByFileName(): Boolean {
-    return !isClass() || isBindingClass() || isBuildConfigClass() || isRClass()
+    return SurgeryConfig.shouldSkipClass(this)
 }
 
 fun String.className(): String {
