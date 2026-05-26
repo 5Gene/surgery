@@ -12,7 +12,6 @@ version = "2024.06.06"
 
 plugins {
     alias(vcl.plugins.android.application) apply false
-    alias(vcl.plugins.kotlin.android) apply false
     alias(vcl.plugins.kotlin.jvm) apply false
     alias(vcl.plugins.ksp) apply false
     alias(vcl.plugins.compose.compiler) apply false
